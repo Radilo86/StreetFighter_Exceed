@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exceed Automa: vs M. Bison</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root { --sf-yellow: #fdd835; --sf-red: #d32f2f; --sf-blue: #1565c0; --bg-dark: #0a0a0a; --panel-bg: #1a1a24; --text-light: #f5f5f5; --exceed-purple: #9c27b0; }
+        body { font-family: 'Bebas Neue', sans-serif; background: radial-gradient(circle at center, #2b2b3c 0%, var(--bg-dark) 100%); color: var(--text-light); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        h1 { font-family: 'Press Start 2P', cursive; color: var(--sf-yellow); text-shadow: 3px 3px 0px var(--sf-red); text-align: center; font-size: 1.5rem; margin-bottom: 20px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 900px; flex-grow: 1;}
+        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+        
+        .panel { background-color: var(--panel-bg); padding: 15px; border-radius: 4px; border: 2px solid #444; box-shadow: inset 0 0 10px #000, 0 4px 8px rgba(0,0,0,0.8); position: relative; }
+        .bison-exceeded { border-color: var(--exceed-purple); box-shadow: inset 0 0 20px var(--exceed-purple), 0 4px 8px rgba(0,0,0,0.8); }
+
+        .health-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; width: 100%; gap: 10px; }
+        .hp-wrapper { width: 45%; position: relative; }
+        .hp-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2px; }
+        .hp-name { font-size: 1.5rem; letter-spacing: 1px; text-transform: uppercase; transition: color 0.3s; }
+        .hp-controls { display: flex; gap: 5px; }
+        .hp-btn { background: #333; color: white; border: 1px solid #777; width: 24px; height: 24px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: sans-serif; }
+        .hp-btn:active { background: #555; }
+        .hp-bar-bg { width: 100%; height: 25px; background-color: #333; border: 2px solid #fff; border-radius: 2px; box-shadow: 2px 2px 0 #000; position: relative; overflow: hidden; }
+        .hp-bar-fill { height: 100%; background: linear-gradient(to bottom, #76ff03 0%, #64dd17 100%); transition: width 0.3s ease, background-color 0.3s ease; width: 100%; }
+        .hp-bar-fill.warning { background: linear-gradient(to bottom, #ffd600 0%, #ffab00 100%); }
+        .hp-bar-fill.danger { background: linear-gradient(to bottom, #ff1744 0%, #d50000 100%); }
+        .hp-number { position: absolute; top: 0; left: 0; width: 100%; text-align: center; line-height: 25px; font-family: 'Press Start 2P', cursive; font-size: 0.7rem; color: #fff; text-shadow: 1px 1px 0 #000; pointer-events: none; }
+        .ko-text { position: absolute; top: 0; left: 0; width: 100%; text-align: center; line-height: 25px; font-family: 'Press Start 2P', cursive; font-size: 1rem; color: #fff; text-shadow: 2px 2px 0 #000; display: none; z-index: 10; background: rgba(0,0,0,0.5); }
+
+        .stats-bar { display: flex; justify-content: space-between; font-size: 1.2rem; background: #000; padding: 8px; border: 1px solid #555; border-radius: 4px; margin-bottom: 15px; color: #aaa; }
+        .gauge-text { color: var(--sf-yellow); font-weight: bold; text-shadow: 1px 1px 0 #000; }
+        
+        .btn { background: linear-gradient(to bottom, #e53935 0%, #b71c1c 100%); color: white; border: 2px solid #fff; padding: 12px 15px; font-size: 1.3rem; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; cursor: pointer; width: 100%; margin-bottom: 10px; box-shadow: 2px 2px 0px #000; transition: transform 0.1s; text-transform: uppercase; }
+        .btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0px 0px 0px #000; }
+        .btn:disabled { background: #444; border-color: #666; cursor: not-allowed; box-shadow: none; color: #777; }
+        .btn-secondary { background: linear-gradient(to bottom, #1e88e5 0%, #0d47a1 100%); }
+        .btn-exceed { background: linear-gradient(to bottom, #ab47bc 0%, #7b1fa2 100%); border-color: #e1bee7; }
+        .btn-advantage { background: #000; border: 1px dashed #aaa; color: #aaa; font-size: 1rem; padding: 8px; margin-top: 5px; }
+        
+        .range-controls { display: flex; align-items: center; justify-content: center; gap: 20px; font-size: 2rem; margin: 15px 0; background: #000; padding: 15px; border-radius: 4px; border: 2px solid var(--sf-blue); }
+        .stepper-btn { background: #333; border: 2px solid #fff; color: white; width: 45px; height: 45px; font-family: 'Press Start 2P', cursive; font-size: 1.2rem; cursor: pointer; box-shadow: 2px 2px 0 #000; }
+        .stepper-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 0 0; }
+        .stepper-btn:disabled { background: #222; border-color: #444; color: #555; cursor: not-allowed; box-shadow: none; }
+        
+        .log-box { background-color: #000; color: #76ff03; font-family: monospace; padding: 10px; height: 160px; overflow-y: auto; border: 2px solid #555; font-size: 0.95rem; line-height: 1.5; }
+        
+        .card-display { border: 3px dashed var(--sf-yellow); padding: 20px; text-align: center; margin-top: 15px; min-height: 140px; display: flex; flex-direction: column; justify-content: center; background: #111; position: relative;}
+        
+        .ex-flash { animation: exGlow 1s infinite alternate; border-color: #ffca28 !important; box-shadow: 0 0 15px #ffca28 inset; }
+        @keyframes exGlow { from { box-shadow: 0 0 5px #ffca28 inset; } to { box-shadow: 0 0 25px #ffca28 inset; } }
+
+        .strike-resolve-ui { display: none; margin-top: 15px; padding-top: 15px; border-top: 2px solid #444; }
+        .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #222; padding: 10px; border: 1px solid #444; }
+        .value-display { font-size: 1.8rem; width: 50px; text-align: center; color: #fff; }
+        
+        .stun-toggle { display: flex; align-items: center; gap: 10px; background: #3e1010; padding: 10px; border: 1px solid var(--sf-red); margin-bottom: 15px; cursor: pointer; font-size: 1.2rem; }
+        .stun-toggle input { width: 20px; height: 20px; cursor: pointer; }
+
+        #gameOverOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; flex-direction: column; border-radius: 4px; }
+        #gameOverText { font-family: 'Press Start 2P', cursive; font-size: 2rem; color: var(--sf-yellow); text-shadow: 4px 4px 0 var(--sf-red); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+
+        footer { text-align: center; margin-top: 30px; padding-bottom: 15px; font-family: 'Press Start 2P', cursive; font-size: 0.6rem; color: #666; letter-spacing: 1px; line-height: 1.8; }
+        footer span { color: var(--sf-red); }
+    </style>
+</head>
+<body>
+
+    <h1>EXCEED: VS M. BISON</h1>
+
+    <div style="width: 100%; max-width: 900px;">
+        <div class="health-container">
+            <div class="hp-wrapper">
+                <div class="hp-header">
+                    <div class="hp-name" style="color: #4caf50;">PLAYER 1</div>
+                    <div class="hp-controls">
+                        <button class="hp-btn" onclick="modificarHP('player', -1)">-</button>
+                        <button class="hp-btn" onclick="modificarHP('player', 1)">+</button>
+                    </div>
+                </div>
+                <div class="hp-bar-bg">
+                    <div class="hp-bar-fill" id="playerHpFill"></div>
+                    <div class="hp-number" id="playerHpNum">30/30</div>
+                    <div class="ko-text" id="playerKoText">K.O.</div>
+                </div>
+            </div>
+            
+            <div class="hp-name" style="font-family: 'Press Start 2P', cursive; font-size: 1.2rem; color: var(--sf-yellow);">VS</div>
+            
+            <div class="hp-wrapper">
+                <div class="hp-header" style="justify-content: flex-end; gap: 10px;">
+                    <div class="hp-name" id="bisonNamePlate" style="color: var(--sf-red);">M. BISON</div>
+                </div>
+                <div class="hp-bar-bg" style="display: flex; justify-content: flex-end;">
+                    <div class="hp-bar-fill" id="bisonHpFill"></div>
+                    <div class="hp-number" id="bisonHpNum">30/30</div>
+                    <div class="ko-text" id="bisonKoText">K.O.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="panel" id="panelEstado">
+            <div id="gameOverOverlay">
+                <div id="gameOverText">GAME OVER</div>
+                <button class="btn btn-secondary" style="width: 80%;" onclick="location.reload()">INSERT COIN (RESTART)</button>
+            </div>
+            
+            <div class="stats-bar">
+                <span>HAND: <span id="bisonHandCount" style="color:#fff;">0</span></span>
+                <span class="gauge-text">GAUGE: <span id="bisonGauge">0</span>/10</span>
+                <span>DECK: <span id="bisonDeckCount" style="color:#fff;">0</span></span>
+            </div>
+            
+            <div class="range-controls">
+                <button class="stepper-btn" onclick="cambiarDistancia(-1)">-</button>
+                <div style="text-align: center;">
+                    <span style="font-size: 1.2rem; display: block; color: var(--sf-blue);">RANGE</span>
+                    <span id="distanciaDisplay" style="color: white; font-weight: bold; font-size: 3rem; line-height: 1; font-family: 'Press Start 2P', cursive;">4</span>
+                </div>
+                <button class="stepper-btn" onclick="cambiarDistancia(1)">+</button>
+            </div>
+            
+            <button class="btn" onclick="turnoBison()" id="btnTurnoBison">BISON TURN (CPU)</button>
+            <button class="btn btn-secondary" id="btnPrepararStrike" onclick="iniciarStrikeManual()">PLAYER STRIKE</button>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-advantage" id="btnAdvantage" onclick="toggleAdvantage()" style="flex: 1;">NO ADVANTAGE</button>
+                <button class="btn btn-exceed" id="btnExceed" onclick="activarExceed()" style="flex: 1; font-size: 1rem; padding: 8px;">ACTIVATE EXCEED (Cost: 4)</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="card-display" id="bisonCardDisplay">
+                <span id="bisonCardHiddenText" style="color: #666; font-size: 1.5rem;">WAITING FOR STRIKE...</span>
+                <div id="bisonCardDetails" style="display: none; font-family: sans-serif; font-size: 1.1rem;"></div>
+            </div>
+
+            <div class="strike-resolve-ui" id="strikeResolveUI">
+                <div class="input-group">
+                    <span style="font-size: 1.3rem;">SPEED:</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="stepper-btn" style="width:35px; height:35px; font-size:1rem;" onclick="modificarStat('Speed', -0.5)">-</button>
+                        <span class="value-display" id="playerSpeedDisplay">5.0</span>
+                        <button class="stepper-btn" style="width:35px; height:35px; font-size:1rem;" onclick="modificarStat('Speed', 0.5)">+</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <span style="font-size: 1.3rem;">DAMAGE:</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="stepper-btn" style="width:35px; height:35px; font-size:1rem;" onclick="modificarStat('Damage', -1)">-</button>
+                        <span class="value-display" id="playerDamageDisplay">4</span>
+                        <button class="stepper-btn" style="width:35px; height:35px; font-size:1rem;" onclick="modificarStat('Damage', 1)">+</button>
+                    </div>
+                </div>
+                
+                <label class="stun-toggle">
+                    <input type="checkbox" id="chkPlayerStunned">
+                    <span>I AM STUNNED (My attack fails)</span>
+                </label>
+                
+                <button class="btn" id="btnFightResolve" style="background-color: var(--sf-yellow); color: #000; border-color: #000;" onclick="resolverChoque()">FIGHT! (RESOLVE)</button>
+                <button class="btn" style="background: transparent; color: #fff; border: 1px solid #fff; box-shadow: none;" onclick="cancelarStrike()">CANCEL STRIKE</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="width: 100%; max-width: 900px; margin-top: 15px;"><div class="log-box" id="logBox"></div></div>
+
+    <footer>
+        INSERT COIN TO CONTINUE<br><br>
+        DESIGNED & CODED BY <span>@RADILO86</span> WITH AI ASSISTANCE
+    </footer>
+
+    <script>
+        const dbCartas = [
+            { id: "grasp", name: "Grasp", type: "Normal", range: [1, 1], power: 3, speed: 7, armor: 0, guard: 0, effect: "Hit: Push 1." },
+            { id: "cross", name: "Cross", type: "Normal", range: [1, 2], power: 3, speed: 6, armor: 0, guard: 0, effect: "Adv: Move 1." },
+            { id: "assault", name: "Assault", type: "Normal", range: [2, 3], power: 4, speed: 4, armor: 0, guard: 0, effect: "Close 1 or 2 before Strike." },
+            { id: "dive", name: "Dive", type: "Normal", range: [3, 4], power: 5, speed: 5, armor: 0, guard: 0, effect: "Close 1 before Strike." },
+            { id: "spike", name: "Spike", type: "Normal", range: [1, 2], power: 5, speed: 3, armor: 0, guard: 5, effect: "Stun Immunity." },
+            { id: "sweep", name: "Sweep", type: "Normal", range: [1, 3], power: 6, speed: 2, armor: 2, guard: 0, effect: "Adv: Move 1 or 2." },
+            { id: "focus", name: "Focus", type: "Normal", range: [1, 7], power: 4, speed: 1, armor: 3, guard: 0, effect: "End: Draw 1 card." },
+            { id: "psycho_crusher", name: "Psycho Crusher", type: "Special", range: [2, 5], power: 5, speed: 6, armor: 0, guard: 3, effect: "Close up to 3 before Strike. Hit: Push 1." },
+            { id: "double_knee_press", name: "Double Knee Press", type: "Special", range: [1, 3], power: 4, speed: 5, armor: 1, guard: 0, effect: "Adv: Gain 1 Force. Hit: Move 1." },
+            { id: "head_press", name: "Head Press", type: "Special", range: [2, 4], power: 6, speed: 4, armor: 0, guard: 0, effect: "Ignore Guard. Switch sides." },
+            { id: "somersault_skull_diver", name: "Skull Diver", type: "Special", range: [1, 2], power: 5, speed: 5, armor: 0, guard: 0, effect: "Adv: Move 1. Hit: Opponent discards random." },
+            { id: "psycho_inferno", name: "Psycho Inferno", type: "Special", range: [1, 2], power: 6, speed: 3, armor: 2, guard: 0, effect: "Hit: Gain 1 Force. Push 2." },
+            { id: "knee_press_nightmare", name: "Knee Press Nightmare", type: "Ultra", cost: 2, range: [1, 4], power: 6, speed: 7, armor: 2, guard: 0, effect: "[Coste: 2 Gauge] Hit: Move up to 2. Gain 1 Adv." },
+            { id: "ultimate_psycho_crusher", name: "Ultimate Psycho Crusher", type: "Ultra", cost: 3, range: [2, 6], power: 8, speed: 6, armor: 0, guard: 0, effect: "[Coste: 3 Gauge] Close up to 4 before Strike. Ignore Guard." },
+            { id: "psycho_punisher", name: "Psycho Punisher", type: "Ultra", cost: 2, range: [1, 2], power: 7, speed: 5, armor: 0, guard: 5, effect: "[Coste: 2 Gauge] Hit: Opponent loses 2 Gauge." }
+        ];
+
+        const MAX_HP = 30; const MAX_GAUGE = 10;
+        let state = { 
+            hpPlayer: MAX_HP, hpBison: MAX_HP, range: 4, bisonGauge: 0, 
+            deck: [], hand: [], discard: [], currentCard: null, 
+            isWildSwing: false, isExStrike: false, activePlayer: null, 
+            playerSpeedVal: 5.0, playerDamageVal: 4, isGameOver: false,
+            advantage: "NONE", isBisonExceeded: false 
+        };
+
+        function log(msg) { const box = document.getElementById("logBox"); box.innerHTML += `> ${msg}<br>`; box.scrollTop = box.scrollHeight; }
+
+        function initDeck() {
+            state.deck = [];
+            dbCartas.forEach(carta => { state.deck.push({...carta}); state.deck.push({...carta}); });
+            shuffle(state.deck);
+            for(let i=0; i<5; i++) drawCard(true);
+            log("ROUND 1... FIGHT! Bison roba 5 cartas.");
+            updateUI();
+        }
+
+        function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+
+        function checkReshuffle(isInitial = false) {
+            if (state.deck.length === 0) {
+                if (state.discard.length === 0) return false;
+                if(!isInitial) { 
+                    log("¡Mazo vacío! Bison recibe 1 DAÑO y baraja su descarte."); 
+                    state.hpBison -= 1; 
+                    checkGameOver();
+                }
+                state.deck = [...state.discard]; state.discard = []; shuffle(state.deck);
+                return true;
+            }
+            return true;
+        }
+
+        function drawCard(isInitial = false) {
+            if(checkReshuffle(isInitial)) {
+                if(state.deck.length > 0) state.hand.push(state.deck.pop());
+            }
+        }
+
+        function checkGameOver() {
+            if (state.hpPlayer <= 0 || state.hpBison <= 0) {
+                state.isGameOver = true;
+                document.getElementById("btnTurnoBison").disabled = true;
+                document.getElementById("btnPrepararStrike").disabled = true;
+                document.getElementById("btnExceed").disabled = true;
+                document.getElementById("btnAdvantage").disabled = true;
+                
+                const buttons = document.querySelectorAll('.stepper-btn');
+                buttons.forEach(btn => btn.disabled = true);
+                
+                document.getElementById("gameOverOverlay").style.display = "flex";
+                if(state.hpPlayer <= 0 && state.hpBison <= 0) document.getElementById("gameOverText").innerText = "DOUBLE K.O.";
+                else if(state.hpPlayer <= 0) document.getElementById("gameOverText").innerText = "BISON WINS";
+                else document.getElementById("gameOverText").innerText = "YOU WIN!";
+            }
+        }
+
+        function updateHPBar(elementId, textId, numId, currentHP) {
+            const fill = document.getElementById(elementId); 
+            const ko = document.getElementById(textId);
+            const num = document.getElementById(numId);
+            
+            const percentage = Math.max(0, (currentHP / MAX_HP) * 100);
+            fill.style.width = percentage + "%"; 
+            fill.className = "hp-bar-fill";
+            num.innerText = `${currentHP}/${MAX_HP}`;
+            
+            if (percentage <= 40 && percentage > 20) fill.classList.add("warning");
+            else if (percentage <= 20) fill.classList.add("danger");
+            
+            if (currentHP <= 0) { 
+                fill.style.width = "0%"; 
+                ko.style.display = "block"; 
+                num.innerText = "0/30";
+            } else { 
+                ko.style.display = "none"; 
+            }
+        }
+
+        function modificarHP(target, val) {
+            if(state.isGameOver) return;
+            if(target === 'player') {
+                state.hpPlayer = Math.min(MAX_HP, Math.max(0, state.hpPlayer + val));
+            } else {
+                state.hpBison = Math.min(MAX_HP, Math.max(0, state.hpBison + val));
+            }
+            updateUI();
+        }
+
+        function toggleAdvantage() {
+            const btn = document.getElementById("btnAdvantage");
+            if (state.advantage === "NONE") {
+                state.advantage = "PLAYER";
+                btn.innerText = "PLAYER ADVANTAGE";
+                btn.style.borderColor = "#4caf50"; btn.style.color = "#4caf50";
+            } else if (state.advantage === "PLAYER") {
+                state.advantage = "BISON";
+                btn.innerText = "BISON ADVANTAGE";
+                btn.style.borderColor = "var(--sf-red)"; btn.style.color = "var(--sf-red)";
+            } else {
+                state.advantage = "NONE";
+                btn.innerText = "NO ADVANTAGE";
+                btn.style.borderColor = "#aaa"; btn.style.color = "#aaa";
+            }
+        }
+
+        function activarExceed() {
+            if(state.isBisonExceeded) return;
+            if(state.bisonGauge >= 4) {
+                state.bisonGauge -= 4;
+                state.isBisonExceeded = true;
+                document.getElementById("btnExceed").innerText = "EXCEED ACTIVE!";
+                document.getElementById("btnExceed").disabled = true;
+                document.getElementById("panelEstado").classList.add("bison-exceeded");
+                document.getElementById("bisonNamePlate").style.color = "var(--exceed-purple)";
+                document.getElementById("bisonNamePlate").style.textShadow = "2px 2px 0px #000";
+                log("⚡ M. BISON SE HA TRANSFORMADO (MODO EXCEED ACTIVO).");
+                updateUI();
+            } else {
+                log("Bison no tiene suficiente Gauge (4) para hacer Exceed.");
+            }
+        }
+
+        function updateUI() {
+            updateHPBar("playerHpFill", "playerKoText", "playerHpNum", state.hpPlayer); 
+            updateHPBar("bisonHpFill", "bisonKoText", "bisonHpNum", state.hpBison);
+            document.getElementById("distanciaDisplay").innerText = state.range; document.getElementById("bisonGauge").innerText = state.bisonGauge;
+            document.getElementById("bisonHandCount").innerText = state.hand.length; document.getElementById("bisonDeckCount").innerText = state.deck.length;
+            checkGameOver();
+        }
+
+        function cambiarDistancia(val) { if(!state.isGameOver) { state.range = Math.max(1, Math.min(7, state.range + val)); updateUI(); } }
+        function modificarStat(stat, val) { if (stat === 'Speed') { state.playerSpeedVal = Math.max(0, state.playerSpeedVal + val); document.getElementById("playerSpeedDisplay").innerText = state.playerSpeedVal.toFixed(1); } else { state.playerDamageVal = Math.max(0, state.playerDamageVal + val); document.getElementById("playerDamageDisplay").innerText = state.playerDamageVal; } }
+
+        function turnoBison() {
+            if(state.isGameOver) return;
+            state.activePlayer = "Bison"; 
+            if (state.hand.length <= 3) { log("CPU: [PREPARE] Roba 1 carta."); drawCard(); updateUI(); } 
+            else {
+                let validAttacks = state.hand.filter(c => state.range >= c.range[0] && state.range <= c.range[1]);
+                validAttacks = validAttacks.filter(c => c.type !== "Ultra" || state.bisonGauge >= c.cost);
+
+                if (validAttacks.length > 0) {
+                    log("CPU: [STRIKE] ¡BISON ATACA! Coloca tu carta en la mesa.");
+                    prepararStrike(validAttacks);
+                } else {
+                    log("CPU: [MOVE] Bison gasta 1 carta de su mano como Force para moverse.");
+                    state.discard.push(state.hand.pop()); 
+                    if (state.range > 3) cambiarDistancia(-1); else if (state.range < 2) cambiarDistancia(1); 
+                    updateUI();
+                }
+            }
+        }
+
+        function iniciarStrikeManual() {
+            if(state.isGameOver) return;
+            state.activePlayer = "Player"; log("PLAYER 1: [STRIKE] Tú inicias el ataque.");
+            let validAttacks = state.hand.filter(c => state.range >= c.range[0] && state.range <= c.range[1]);
+            validAttacks = validAttacks.filter(c => c.type !== "Ultra" || state.bisonGauge >= c.cost);
+            prepararStrike(validAttacks);
+        }
+
+        function prepararStrike(validAttacks) {
+            state.isWildSwing = false; state.isExStrike = false;
+            document.getElementById("chkPlayerStunned").checked = false; 
+
+            if (validAttacks.length === 0) {
+                log("CPU: [WILD SWING] Bison ataca a ciegas."); state.isWildSwing = true;
+                checkReshuffle(); 
+                if(state.deck.length > 0) state.currentCard = state.deck.pop();
+            } else {
+                let idx = Math.floor(Math.random() * validAttacks.length);
+                state.currentCard = validAttacks[idx];
+                state.hand.splice(state.hand.indexOf(state.currentCard), 1);
+                
+                if (state.currentCard.type === "Ultra") { state.bisonGauge -= state.currentCard.cost; }
+                else if (state.bisonGauge >= 1 && state.hand.length >= 1 && Math.random() < 0.35) {
+                    state.isExStrike = true;
+                    state.bisonGauge -= 1;
+                    state.discard.push(state.hand.pop()); 
+                    log(`(La IA murmura: "Esto te va a doler". Ha gastado recursos ocultos...)`);
+                }
+            }
+            mostrarUIResolucion(true);
+        }
+
+        function cancelarStrike() {
+            if (state.isWildSwing && state.currentCard) state.deck.push(state.currentCard);
+            else if (state.currentCard) { 
+                state.hand.push(state.currentCard); 
+                if (state.currentCard.type === "Ultra") state.bisonGauge += state.currentCard.cost; 
+                else if (state.isExStrike) { 
+                    state.bisonGauge += 1; 
+                    if(state.discard.length > 0) state.hand.push(state.discard.pop()); 
+                } 
+            }
+            state.currentCard = null; log("Strike cancelado."); mostrarUIResolucion(false); updateUI();
+        }
+
+        function mostrarUIResolucion(activo) {
+            document.getElementById("strikeResolveUI").style.display = activo ? "block" : "none";
+            document.getElementById("btnTurnoBison").disabled = activo; document.getElementById("btnPrepararStrike").disabled = activo;
+            document.getElementById("btnFightResolve").disabled = !activo; // Seguro Anti-Doble Clic
+            
+            document.getElementById("btnAdvantage").disabled = activo;
+            if(!state.isBisonExceeded) document.getElementById("btnExceed").disabled = activo;
+
+            const hiddenText = document.getElementById("bisonCardHiddenText");
+            hiddenText.innerText = activo ? (state.isWildSwing ? "?? WILD SWING ??" : "?? HIDDEN CARD ??") : "WAITING FOR STRIKE...";
+            hiddenText.style.color = activo ? (state.isWildSwing ? "var(--sf-yellow)" : "var(--sf-red)") : "#666";
+            document.getElementById("bisonCardDisplay").classList.remove("ex-flash");
+        }
+
+        function resolverChoque() {
+            if(!state.currentCard) return; // Cortafuegos de seguridad
+            
+            // Seguro Anti-Doble Clic
+            document.getElementById("btnFightResolve").disabled = true;
+            
+            let bCard = { ...state.currentCard }; 
+            let isEx = state.isExStrike;
+
+            if (state.isWildSwing && bCard.type === "Ultra") {
+                if (state.bisonGauge < bCard.cost) { log(`Falla el Wild Swing: Reveló Ultra pero no tiene ${bCard.cost} Gauge.`); bCard.speed = -1; bCard.power = 0; bCard.effect = "Falla por falta de Gauge."; }
+                else { state.bisonGauge -= bCard.cost; log(`Wild Swing revela Ultra: Paga ${bCard.cost} Gauge.`); }
+            }
+
+            if (isEx) { bCard.speed += 1; bCard.power += 1; bCard.armor += 1; document.getElementById("bisonCardDisplay").classList.add("ex-flash"); }
+
+            let typeColor = isEx ? "#ffca28" : (bCard.type === "Ultra" ? "#ab47bc" : (bCard.type === "Special" ? "var(--sf-blue)" : "white"));
+            let exText = isEx ? "<span style='color:#ffca28; text-shadow: 1px 1px 0 #000;'>💥 EX STRIKE! 💥</span><br>" : "";
+            
+            document.getElementById("bisonCardHiddenText").style.display = "none";
+            document.getElementById("bisonCardDetails").innerHTML = `
+                ${exText}
+                <strong style="font-size: 1.8rem; color: ${typeColor}; text-transform: uppercase;">${bCard.name} ${isEx ? "(EX)" : "["+bCard.type+"]"}</strong><br>
+                <div style="margin: 10px 0; background: #000; border: 2px solid ${isEx ? '#ffca28' : '#555'}; padding: 10px; font-family: 'Press Start 2P', cursive; font-size: 0.8rem; color: #fff;">
+                    R:${bCard.range[0]}-${bCard.range[1]} | <span style="color:var(--sf-yellow);">SPD:${bCard.speed}</span> | DMG:${bCard.power} <br><br>
+                    ARM:${bCard.armor} | GRD:${bCard.guard}
+                </div>
+                <i style="color: var(--sf-yellow);">${bCard.effect}</i>
+            `;
+            document.getElementById("bisonCardDetails").style.display = "block";
+
+            let pSpeed = state.playerSpeedVal; let isPlayerStunned = document.getElementById("chkPlayerStunned").checked;
+            let pDmg = isPlayerStunned ? 0 : state.playerDamageVal; 
+            
+            let first = "Empate";
+            if (pSpeed > bCard.speed) first = "Player"; else if (bCard.speed > pSpeed) first = "Bison"; else first = state.activePlayer; 
+
+            if(isPlayerStunned) log("Aviso: Has marcado que estás Stunned. Tu ataque falla.");
+
+            let bStunned = false;
+
+            if (first === "Player") {
+                if (!isPlayerStunned) bStunned = calcularImpacto("Bison", pDmg, bCard.armor, bCard.guard);
+                if (!bStunned && state.hpBison > 0 && bCard.power > 0) calcularImpacto("Player", bCard.power, 0, 0); 
+            } else {
+                calcularImpacto("Player", bCard.power, 0, 0);
+                if (!isPlayerStunned && state.hpPlayer > 0 && pDmg > 0) bStunned = calcularImpacto("Bison", pDmg, bCard.armor, bCard.guard);
+            }
+
+            if ((state.currentCard.type === "Normal" || state.currentCard.type === "Special") && !isEx) {
+                state.bisonGauge = Math.min(MAX_GAUGE, state.bisonGauge + 1); 
+            } else {
+                state.discard.push(state.currentCard); 
+            }
+
+            log("Resolución Finalizada. Robad 1 carta."); drawCard(); updateUI();
+
+            // Limpiamos la carta de la memoria para evitar bugs
+            state.currentCard = null;
+            
+            document.getElementById("strikeResolveUI").style.display = "none";
+            
+            if(!state.isGameOver) {
+                document.getElementById("btnAdvantage").disabled = false;
+                if(!state.isBisonExceeded) document.getElementById("btnExceed").disabled = false;
+
+                setTimeout(() => {
+                    document.getElementById("bisonCardHiddenText").style.display = "block";
+                    document.getElementById("bisonCardDetails").style.display = "none";
+                    mostrarUIResolucion(false);
+                }, 6000); 
+            }
+        }
+
+        function calcularImpacto(target, rawDamage, armor, guard) {
+            let actualDamage = Math.max(0, rawDamage - armor);
+            let isStunImmune = (target === "Bison" && state.currentCard && state.currentCard.effect.includes("Stun Immunity"));
+
+            if (target === "Bison") { 
+                state.hpBison -= actualDamage; 
+                log(`>> BISON recibe ${actualDamage} DMG.`); 
+                if (actualDamage > guard && guard !== Infinity && guard > 0) { 
+                    if (isStunImmune) { log(`>> ¡BISON ABSORBE EL GOLPE! Tiene Inmunidad al Aturdimiento.`); return false; } 
+                    else { log(`>> ¡BISON STUNNED!`); return true; }
+                } 
+            } else { 
+                state.hpPlayer -= rawDamage; 
+                log(`>> RECIBES ${rawDamage} DMG (Aplica armadura física y revisa tu Stun).`); 
+                return false; 
+            } 
+            return false;
+        }
+
+        initDeck();
+    </script>
+</body>
+</html>
