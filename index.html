@@ -3,241 +3,466 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exceed Automa: M. Bison Master Final v9</title>
+    <title>Exceed Automa: M. Bison Tournament AI v20</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root { --sf-yellow: #fdd835; --sf-red: #d32f2f; --sf-blue: #1565c0; --bg-dark: #0a0a0a; --panel-bg: #1a1a24; --text-light: #f5f5f5; --exceed-purple: #9c27b0; }
         body { font-family: 'Bebas Neue', sans-serif; background: radial-gradient(circle at center, #2b2b3c 0%, var(--bg-dark) 100%); color: var(--text-light); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        h1 { font-family: 'Press Start 2P', cursive; color: var(--sf-yellow); text-shadow: 3px 3px 0px var(--sf-red); text-align: center; font-size: 1rem; margin-bottom: 20px; }
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 900px; }
+        h1 { font-family: 'Press Start 2P', cursive; color: var(--sf-yellow); text-shadow: 2px 2px 0px var(--sf-red); text-align: center; font-size: 0.8rem; margin-bottom: 15px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 950px; }
         @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
-        .panel { background-color: var(--panel-bg); padding: 15px; border: 2px solid #444; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .panel { background-color: var(--panel-bg); padding: 15px; border: 2px solid #444; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); position: relative; }
         .hp-bar-bg { width: 100%; height: 25px; background: #333; border: 2px solid #fff; position: relative; margin-top: 5px; }
         .hp-bar-fill { height: 100%; background: #64dd17; transition: width 0.3s; }
-        .btn { background: linear-gradient(to bottom, #e53935, #b71c1c); color: white; border: 2px solid #fff; padding: 10px; cursor: pointer; width: 100%; margin-top: 5px; font-family: 'Bebas Neue'; font-size: 1.2rem; text-transform: uppercase; box-shadow: 2px 2px 0 #000; }
-        .log-box { background: #000; color: #76ff03; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; border: 1px solid #555; border-radius: 4px; line-height: 1.4; }
+        .btn { background: linear-gradient(to bottom, #e53935, #b71c1c); color: white; border: 2px solid #fff; padding: 10px; cursor: pointer; width: 100%; margin-top: 5px; font-family: 'Bebas Neue'; font-size: 1.1rem; text-transform: uppercase; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .log-box { background: #000; color: #76ff03; padding: 10px; height: 350px; overflow-y: auto; font-family: monospace; font-size: 0.75rem; border: 1px solid #555; border-radius: 4px; line-height: 1.4; }
         .strike-ui { display: none; background: #222; padding: 15px; border: 2px solid var(--sf-yellow); margin-top: 10px; border-radius: 4px; }
-        #gameOver { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        input[type=number] { background: #333; color: white; border: 1px solid var(--sf-yellow); font-family: 'Press Start 2P', cursive; padding: 5px; width: 60px; text-align: center; }
+        .exceed-active { border-color: var(--exceed-purple) !important; box-shadow: 0 0 15px var(--exceed-purple); }
+        input[type=number] { background: #333; color: white; border: 1px solid var(--sf-yellow); font-family: 'Press Start 2P', cursive; padding: 5px; width: 40px; text-align: center; font-size: 0.6rem;}
+        .stat-block { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .shadaloo-box { display: none; background: #311; border: 2px solid var(--sf-red); padding: 15px; margin-top: 15px; text-align: center; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="gameOver">
-        <h2 id="winText" style="font-family:'Press Start 2P'; color: var(--sf-yellow); text-align: center;"></h2>
-        <button class="btn" style="width:250px; margin-top:30px;" onclick="location.reload()">REINTENTAR</button>
+    <div id="gameOver" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; flex-direction:column; align-items:center; justify-content:center;">
+        <h2 id="winText" style="font-family:'Press Start 2P'; color:var(--sf-yellow);"></h2>
+        <button class="btn" style="width:200px;" onclick="location.reload()">NUEVA PARTIDA</button>
     </div>
 
-    <h1>EXCEED S3: M. BISON MASTER (V9)</h1>
+    <h1>EXCEED S3: M. BISON TOURNAMENT v20</h1>
 
     <div class="grid-container">
-        <div class="panel">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 10px; color: #aaa;">
-                <span>MAZO: <b id="deckCount">30</b></span>
+        <div class="panel" id="mainPanel">
+            <div style="display:flex; justify-content: space-between; margin-bottom: 5px; color: #aaa; font-size: 0.8rem;">
+                <span>MAZO BISON: <b id="deckCount">30</b></span>
                 <span style="color:var(--sf-yellow)">GAUGE: <b id="gaugeCount">0</b></span>
-                <span>MANO: <b id="handCount">0</b></span>
+                <span>MANO BISON: <b id="handCount">0</b></span>
             </div>
             
-            <div class="hp-bar-bg"><div id="pHPFill" class="hp-bar-fill"></div><div style="position:absolute; width:100%; text-align:center; top:0; color:white; font-size:0.8rem; line-height:25px;">JUGADOR: <span id="pHPText">30</span> PV</div></div>
-            <div class="hp-bar-bg"><div id="bHPFill" class="hp-bar-fill" style="background:var(--sf-red)"></div><div style="position:absolute; width:100%; text-align:center; top:0; color:white; font-size:0.8rem; line-height:25px;">M. BISON: <span id="bHPText">30</span> PV</div></div>
+            <div class="hp-bar-bg"><div id="pHPFill" class="hp-bar-fill"></div><div style="position:absolute; width:100%; text-align:center; top:0; color:white; font-size:0.75rem; line-height:25px;">JUGADOR: <span id="pHPText">30</span> PV</div></div>
+            <div class="hp-bar-bg"><div id="bHPFill" class="hp-bar-fill" style="background:var(--sf-red)"></div><div style="position:absolute; width:100%; text-align:center; top:0; color:white; font-size:0.75rem; line-height:25px;">M. BISON: <span id="bHPText">30</span> PV</div></div>
             
-            <div style="text-align:center; margin:15px 0; background:#000; padding:15px; border-radius: 4px; border: 1px solid var(--sf-blue);">
-                <button class="btn" style="width:45px; display:inline; margin:0;" onclick="modDist(-1)">-</button>
-                <span style="font-size: 1.8rem; margin: 0 20px; font-family:'Press Start 2P';">R:<span id="rangeText">4</span></span>
-                <button class="btn" style="width:45px; display:inline; margin:0;" onclick="modDist(1)">+</button>
+            <div style="background:#111; padding:5px; border:1px dashed #555; margin-top:10px; font-size:0.8rem; text-align:center; color:var(--sf-yellow);">
+                BOOST ACTIVO BISON: <span id="bBoostText">Ninguno</span>
             </div>
 
-            <button class="btn" onclick="turnoBison()" id="cpuBtn">TURNO BISON (CPU)</button>
-            <button class="btn" style="background:var(--sf-blue)" onclick="strikeManual()" id="playerBtn">JUGADOR ASALTO</button>
-            <button class="btn" id="btnAdv" style="background:#444;" onclick="toggleAdv()">VENTAJA: NINGUNA</button>
+            <div style="text-align:center; margin:10px 0; background:#000; padding:10px; border:1px solid var(--sf-blue);">
+                <button class="btn" id="btnDistMenos" style="width:35px; display:inline; margin:0;" onclick="modDist(-1)">-</button>
+                <span style="font-size: 1.2rem; margin: 0 15px; font-family:'Press Start 2P';">RANGO:<span id="rangeText" style="color:var(--sf-red)">4</span></span>
+                <button class="btn" id="btnDistMas" style="width:35px; display:inline; margin:0;" onclick="modDist(1)">+</button>
+            </div>
+
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px; font-size:0.7rem; color:#aaa; margin-bottom:5px;">
+                Cartas Mano Jugador: <input type="number" id="pHand" value="5">
+            </div>
+
+            <button class="btn" id="btnIA" onclick="iaBisonTurno()">TURNO DE IA M. BISON</button>
+            <button class="btn" id="btnJugador" style="background:var(--sf-blue)" onclick="strikeManual()">JUGADOR INICIA ASALTO</button>
+            <button class="btn" id="btnAdv" style="background:#333;" onclick="toggleAdv()">VENTAJA: NINGUNA</button>
+            <div id="exceedBadge" style="display:none; text-align:center; background:var(--exceed-purple); color:white; margin-top:10px; padding:5px; font-size:0.8rem;">ULTIMATE PSYCHO POWER (EXCEED)</div>
+            
+            <div id="shadalooUI" class="shadaloo-box">
+                <p style="color:white; font-size:0.8rem;"><strong>SHADALOO INTELLIGENCE</strong><br>Bison juega su Boost. Exige que descartes una copia de tu carta en mano o reveles una mano sin copias.</p>
+                <button class="btn" style="background:var(--sf-red); font-size:0.9rem;" onclick="resolverShadaloo(true)">DESCARTAR COPIA (Sufres Asalto Gratis)</button>
+                <button class="btn" style="background:#555; font-size:0.9rem;" onclick="resolverShadaloo(false)">NO TENGO COPIA (Bison termina turno)</button>
+            </div>
         </div>
 
         <div class="panel">
             <div class="log-box" id="log"></div>
             
             <div id="strikeUI" class="strike-ui">
-                <div id="bisonCard" style="background:#111; padding:12px; border-left:4px solid var(--sf-red); margin-bottom:15px; display:none; font-family: sans-serif;"></div>
-                
-                <div id="inputs">
-                    <div style="display:flex; justify-content: space-around; margin-bottom:15px; text-align: center;">
-                        <div>SPD Jugador:<br><input type="number" id="pSpeed" value="5"></div>
-                        <div>POW Jugador:<br><input type="number" id="pDmg" value="4"></div>
-                    </div>
-                    <button class="btn" id="btnRevelar" style="background:var(--sf-yellow); color:#000; border-color:#000;" onclick="revelar()">REVELAR CARTA BISON</button>
+                <div id="bisonCard" style="background:#111; padding:10px; border-left:4px solid var(--sf-red); margin-bottom:10px;"></div>
+                <div id="inputs" style="display:flex; justify-content:space-around; margin-bottom:10px;">
+                    <div class="stat-block">SPD<input type="number" id="pSpeed" value="5"></div>
+                    <div class="stat-block">POW<input type="number" id="pDmg" value="4"></div>
+                    <div class="stat-block">GRD<input type="number" id="pGuard" value="0"></div>
+                    <div class="stat-block">ARM<input type="number" id="pArmor" value="0"></div>
                 </div>
-
-                <div id="resolveStep" style="display:none;">
-                    <p style="text-align:center; color:#aaa; font-size: 0.85rem;">FASE BEFORE: Aplica movimientos. Ajusta tus stats arriba si el rango cambia.</p>
-                    <button class="btn" style="background:var(--sf-blue)" onclick="compararVelocidad()">RESOLVER IMPACTO</button>
-                </div>
-
-                <div id="afterPhase" style="display:none; text-align:center; border: 2px solid var(--sf-blue); padding: 10px; background:#1a1a24; margin-top: 10px;">
-                    <p id="afterText" style="font-size: 0.9rem; margin-bottom:10px;"></p>
-                    <button class="btn" style="background:#000;" onclick="limpiar()">OK: IR A LIMPIEZA</button>
-                </div>
-
-                <div id="stunCheck" style="display:none; text-align:center; border: 2px solid var(--sf-red); padding: 10px; background:#300;">
-                    <p id="msgBisonHit" style="font-size:1.1rem; margin-bottom:10px; font-weight: bold;"></p>
-                    <button class="btn" style="background:var(--sf-red)" onclick="finalizarAsalto(true)">ESTOY ATURDIDO (STUN)</button>
-                    <button class="btn" style="background:#2e7d32" onclick="finalizarAsalto(false)">SOBREVIVO (CONTRAATAQUE)</button>
-                </div>
+                <button class="btn" id="btnReveal" style="background:var(--sf-yellow); color:#000; margin-bottom:10px;" onclick="revelar()">REVELAR CARTA BISON</button>
+                <div id="stepBefore" style="display:none;"><button class="btn" onclick="procesarFaseUI('BEFORE')">Fase Before</button></div>
+                <div id="stepResolve" style="display:none;"><button class="btn" style="background:var(--sf-red)" onclick="compararVelocidad()">Resolver Impacto</button></div>
+                <div id="stepAfter" style="display:none;"><button class="btn" onclick="procesarFaseUI('AFTER')">Fase After</button></div>
+                <div id="stepClean" style="display:none;"><button class="btn" style="background:#000;" onclick="limpiar()">Ir a Limpieza</button></div>
             </div>
         </div>
     </div>
 
 <script>
     const db = [
-        { n: "Grasp", s: 7, p: 3, r: [1,1], g: 0, a: 0, e: "Hit: Push 1" }, { n: "Grasp", s: 7, p: 3, r: [1,1], g: 0, a: 0, e: "Hit: Push 1" },
-        { n: "Cross", s: 6, p: 3, r: [1,2], g: 0, a: 0, e: "After: Move up to 2" }, { n: "Cross", s: 6, p: 3, r: [1,2], g: 0, a: 0, e: "After: Move up to 2" },
-        { n: "Assault", s: 4, p: 4, r: [2,3], g: 0, a: 0, e: "Before: Close 1 or 2" }, { n: "Assault", s: 4, p: 4, r: [2,3], g: 0, a: 0, e: "Before: Close 1 or 2" },
-        { n: "Dive", s: 5, p: 5, r: [3,4], g: 0, a: 0, e: "Before: Close 1" }, { n: "Dive", s: 5, p: 5, r: [3,4], g: 0, a: 0, e: "Before: Close 1" },
-        { n: "Spike", s: 3, p: 5, r: [1,2], g: 5, a: 0, crit: true, e: "Crit: Inmune Stun" }, { n: "Spike", s: 3, p: 5, r: [1,2], g: 5, a: 0, crit: true, e: "Crit: Inmune Stun" },
-        { n: "Sweep", s: 2, p: 6, r: [1,3], g: 0, a: 2, e: "Hit: Push 1" }, { n: "Sweep", s: 2, p: 6, r: [1,3], g: 0, a: 2, e: "Hit: Push 1" },
-        { n: "Focus", s: 1, p: 4, r: [1,7], g: 5, a: 3, e: "After: Draw 1" }, { n: "Focus", s: 1, p: 4, r: [1,7], g: 5, a: 3, e: "After: Draw 1" },
-        { n: "Psycho Crusher", s: 4, p: 4, r: [1,2], g: 0, a: 0, e: "Hit: Pass Through" }, { n: "Head Press", s: 5, p: 5, r: [1,3], g: 0, a: 0, crit: true, e: "Crit: +1 SPD/POW" },
-        { n: "Knee Nightmare", s: 6, p: 6, r: [1,2], g: 2, a: 0, ultra: true, cost: 3, e: "Ultra: Bison S3" }
+        { n: "Grasp", s: 7, p: 3, r: [1,1], g: 0, a: 0, f: 1, boost: "Cont: +2 Speed", e: "Hit: Push 1" },
+        { n: "Cross", s: 6, p: 3, r: [1,2], g: 0, a: 0, f: 1, boost: "Cont: +2 Power", e: "After: Move up to 2" },
+        { n: "Assault", s: 4, p: 4, r: [2,3], g: 0, a: 0, f: 1, boost: "Cont: +1 Range", e: "Before: Close 1 or 2" },
+        { n: "Dive", s: 5, p: 5, r: [3,4], g: 0, a: 0, f: 2, boost: "Cont: +1 Armor", e: "Before: Close 1" },
+        { n: "Spike", s: 3, p: 5, r: [1,2], g: 5, a: 0, f: 1, crit: true, boost: "Cont: +2 Guard", e: "Crit: Inmune Stun" },
+        { n: "Sweep", s: 2, p: 6, r: [1,3], g: 0, a: 2, f: 2, boost: "Cont: Advantage on Hit", e: "Hit: Push 1" },
+        { n: "Focus", s: 1, p: 4, r: [1,7], g: 5, a: 3, f: 1, boost: "Cont: Draw 1. Sustain", e: "After: Draw 1" },
+        
+        { n: "Devil Reverse", s: 5, p: 5, r: [1,2], g: 0, a: 0, f: 2, boost: "Inst: Bison Dollars", crit: true, e: "Crit, Hit: Advance or Retreat 3. After: Retreat up to 2." },
+        { n: "Head Stomp", s: 5, p: 5, r: [2,3], g: 0, a: 0, f: 2, boost: "Cont: Unstoppable", crit: true, e: "Crit: +1 Power, +1 Speed. After: Close 2. If opp stunned, Push or Pull up to 2." },
+        { n: "Psycho Crusher", s: 4, p: 4, r: [1,2], g: 0, a: 0, f: 2, boost: "Cont: Psycho Power", crit: true, e: "Before: Advance 3. Crit, Hit: Advance or Retreat 3, then draw 1." },
+        { n: "Sliding Kick", s: 5, p: 4, r: [1,1], g: 3, a: 0, f: 2, boost: "Inst: Quick Backdash", crit: true, e: "Before: Close 2. Crit, Hit: +2 Power and Push 2." },
+        { n: "Somersault Skull Diver", s: 4, p: 4, r: [1,1], g: 0, a: 0, f: 2, boost: "Inst: Shadaloo Intelligence", crit: true, e: "Crit: +1 Power, +6 Guard, Ignore Armor. Before: Advance 1 or 2. Hit: Push 2." },
+        
+        { n: "Nightmare Booster", s: 6, p: 6, r: [2,3], g: 0, a: 0, f: 3, ultra: true, cost: 3, crit: true, boost: "Inst: Psycho Booster", e: "Crit, Hit: Opp attack misses. After: Close 1 or 2." },
+        { n: "Psycho Punisher", s: 4, p: 7, r: [1,2], g: 4, a: 0, f: 3, ultra: true, cost: 3, crit: true, boost: "Inst: Bison Teleport", e: "Before: Close 2. Crit, Hit: +2 Power and gain Advantage." }
     ];
 
-    let state = { hpP: 30, hpB: 30, r: 4, deck: [], hand: [], gauge: [], discard: [], adv: "NINGUNA", exc: false, res: false, curr: null, active: "", isCrit: false, stunnedB: false, stunnedP: false };
+    let state = { hpP: 30, hpB: 30, r: 4, deck: [], hand: [], gauge: [], discard: [], adv: "NINGUNA", exc: false, res: false, curr: null, active: "", isEX: false, activeBoostBison: null, stunnedB: false, stunnedP: false, bisonHit: false, isWild: false };
 
     function log(m) { const l = document.getElementById("log"); l.innerHTML += `> ${m}<br>`; l.scrollTop = l.scrollHeight; }
-    
+
     function updateUI() {
-        document.getElementById("pHPText").innerText = state.hpP;
-        document.getElementById("bHPText").innerText = state.hpB;
-        document.getElementById("pHPFill").style.width = (state.hpP/30*100) + "%";
-        document.getElementById("bHPFill").style.width = (state.hpB/30*100) + "%";
-        document.getElementById("deckCount").innerText = state.deck.length;
-        document.getElementById("gaugeCount").innerText = state.gauge.length;
+        document.getElementById("pHPText").innerText = state.hpP; document.getElementById("bHPText").innerText = state.hpB;
+        document.getElementById("pHPFill").style.width = (state.hpP/30*100) + "%"; document.getElementById("bHPFill").style.width = (state.hpB/30*100) + "%";
+        document.getElementById("deckCount").innerText = state.deck.length; document.getElementById("gaugeCount").innerText = state.gauge.length;
         document.getElementById("handCount").innerText = state.hand.length;
-        if (state.hpP <= 0) finGame("K.O. - HAS PERDIDO");
-        if (state.hpB <= 0) finGame("¡VICTORIA!");
+        document.getElementById("bBoostText").innerText = state.activeBoostBison ? state.activeBoostBison.n + " ("+state.activeBoostBison.boost+")" : "Ninguno";
+        if(state.exc) { document.getElementById("mainPanel").classList.add("exceed-active"); document.getElementById("exceedBadge").style.display = "block"; }
+        if (state.hpP <= 0 || state.hpB <= 0) document.getElementById("gameOver").style.display="flex";
     }
 
     function drawCard() {
         if (state.deck.length === 0) {
-            if (state.res) { finGame("VICTORIA POR FATIGA"); return false; }
-            state.hpB -= 1; state.deck = [...state.discard]; state.discard = [];
-            state.deck.sort(() => Math.random() - 0.5); state.res = true;
-            log("!! Mazo vacío. Bison rebaraja (-1 PV).");
+            if (state.res) { document.getElementById("winText").innerText="DERROTA POR FATIGA"; document.getElementById("gameOver").style.display="flex"; return; }
+            state.deck = [...state.discard]; state.discard = []; state.deck.sort(() => Math.random() - 0.5); state.res = true;
+            log("!! Bison rebaraja su mazo por fatiga.");
         }
         if (state.deck.length > 0) state.hand.push(state.deck.pop());
-        return true;
-    }
-
-    function turnoBison() {
-        state.active = "BISON"; 
-        if (state.gauge.length >= 3 && !state.exc) {
-            state.exc = true; state.discard.push(...state.gauge.splice(0,3));
-            log("¡BISON ACTIVA MODO EXCEED!"); return updateUI();
-        }
-        prepStrike();
-    }
-
-    function strikeManual() { state.active = "PLAYER"; log("--- ASALTO JUGADOR ---"); prepStrike(); }
-
-    function prepStrike() {
-        let valid = state.hand.filter(c => state.r >= c.r[0] && state.r <= c.r[1]);
-        if (valid.length === 0) {
-            log("Bison sin cartas en rango. ¡WILD SWING!");
-            state.curr = state.deck.length > 0 ? state.deck.pop() : state.hand.pop();
-        } else {
-            state.curr = valid[Math.floor(Math.random() * valid.length)];
-            state.hand.splice(state.hand.indexOf(state.curr), 1);
-        }
-        state.stunnedB = false; state.stunnedP = false; state.isCrit = false;
-        document.getElementById("strikeUI").style.display = "block";
-        document.getElementById("inputs").style.display = "block";
-        document.getElementById("btnRevelar").style.display = "block";
-        document.getElementById("resolveStep").style.display = "none";
-        document.getElementById("stunCheck").style.display = "none";
-        document.getElementById("afterPhase").style.display = "none";
-        document.getElementById("bisonCard").style.display = "none";
-    }
-
-    function revelar() {
-        if (state.curr.crit && state.gauge.length > 0) {
-            state.isCrit = true; state.discard.push(state.gauge.pop());
-            if (state.curr.n === "Head Press") { state.curr.s += 1; state.curr.p += 1; }
-            log("Bison gasta 1 Gauge: ¡CRITICAL!");
-        }
-        document.getElementById("bisonCard").innerHTML = `<b>${state.curr.n}</b> ${state.isCrit ? '[CRIT]' : ''}<br>SPD: ${state.curr.s} | POW: ${state.curr.p} | GRD: ${state.curr.g} | ARM: ${state.curr.a}<br><small>${state.curr.e}</small>`;
-        document.getElementById("bisonCard").style.display = "block";
-        document.getElementById("btnRevelar").style.display = "none";
-        document.getElementById("resolveStep").style.display = "block";
-    }
-
-    function compararVelocidad() {
-        const pS = parseInt(document.getElementById("pSpeed").value);
-        const bS = state.curr.s;
-        let bGana = (state.adv === "BISON") || (state.adv === "NINGUNA" && state.active === "BISON");
-        
-        document.getElementById("resolveStep").style.display = "none";
-        document.getElementById("inputs").style.display = "none";
-        
-        if (bS > pS || (bS === pS && bGana)) {
-            log("Bison es más rápido.");
-            document.getElementById("msgBisonHit").innerText = `Bison impacta (${state.curr.p} daño)`;
-            document.getElementById("stunCheck").style.display = "block";
-        } else {
-            log("Eres más rápido.");
-            state.stunnedB = impactar("BISON", parseInt(document.getElementById("pDmg").value), state.curr.g, state.curr.a);
-            if (!state.stunnedB && state.hpB > 0) {
-                state.stunnedP = impactar("PLAYER", state.curr.p, 0, 0);
-            }
-            faseAfter();
-        }
-    }
-
-    function impactar(t, p, g, a) {
-        let dmg = Math.max(0, p - a);
-        if (t === "BISON") {
-            state.hpB -= dmg; log(`Bison recibe ${dmg} daño.`);
-            if (dmg > g) {
-                if (state.curr.n === "Spike" && state.isCrit) { log("Inmunidad Spike: No hay stun."); return false; }
-                log("¡BISON ATURDIDO!"); return true;
-            }
-        } else { state.hpP -= dmg; log(`Recibes ${dmg} daño.`); }
-        updateUI(); return false;
-    }
-
-    function finalizarAsalto(st) {
-        state.stunnedP = st;
-        if (!state.stunnedP) impactar("BISON", parseInt(document.getElementById("pDmg").value), state.curr.g, state.curr.a);
-        document.getElementById("stunCheck").style.display = "none";
-        faseAfter();
-    }
-
-    function faseAfter() {
-        log("--- FASE AFTER ---");
-        document.getElementById("afterPhase").style.display = "block";
-        let bisonMsg = state.stunnedB ? "Bison aturdido: Sin efectos After." : `Efectos Bison: <b>${state.curr.e}</b>`;
-        document.getElementById("afterText").innerHTML = bisonMsg;
-    }
-
-    function limpiar() {
-        state.gauge.push(state.curr);
-        document.getElementById("strikeUI").style.display = "none";
-        log("Limpieza: Carta al Gauge. SIN ROBO automático.");
         updateUI();
     }
 
-    function toggleAdv() {
-        const l = ["NINGUNA", "PLAYER", "BISON"];
-        state.adv = l[(l.indexOf(state.adv) + 1) % 3];
-        document.getElementById("btnAdv").innerText = "VENTAJA: " + state.adv;
+    function checkHandLimit() {
+        if (state.hand.length > 7) {
+            let diff = state.hand.length - 7;
+            log(`Límite excedido (+${diff}). Bison descarta el exceso.`);
+            state.hand.sort((a,b) => a.f - b.f);
+            for(let i=0; i<diff; i++) state.discard.push(state.hand.shift());
+            updateUI();
+        }
     }
 
-    function modDist(v) { state.r = Math.max(1, Math.min(7, state.r + v)); document.getElementById("rangeText").innerText = state.r; }
-    function finGame(t) { document.getElementById("gameOver").style.display = "flex"; document.getElementById("winText").innerText = t; }
+    function finishPassiveTurn() { drawCard(); checkHandLimit(); }
 
-    db.forEach(c => { 
-        if(c.ultra) state.deck.push({...c}); 
-        else { state.deck.push({...c}); state.deck.push({...c}); }
-    });
+    function calcularRangoIdeal() {
+        if (state.hand.length === 0) return 4;
+        let sum = 0, count = 0;
+        state.hand.forEach(c => { if (c.r) { sum += (c.r[0] + c.r[1]) / 2; count++; } });
+        return count > 0 ? Math.round(sum / count) : 4;
+    }
+
+    function moverHacia(ideal, maxMov) {
+        let diff = ideal - state.r;
+        let mov = Math.min(Math.abs(diff), maxMov);
+        if (diff > 0) modDist(mov); 
+        else if (diff < 0) modDist(-mov);
+    }
+
+    // --- MANEJO DE SHADALOO INTELLIGENCE (Lógica Invertida Legal) ---
+    function mostrarShadalooPrompt() {
+        document.getElementById("shadalooUI").style.display = "block";
+        document.getElementById("btnIA").disabled = true;
+        document.getElementById("btnJugador").disabled = true;
+        document.getElementById("btnDistMenos").disabled = true;
+        document.getElementById("btnDistMas").disabled = true;
+    }
+
+    function resolverShadaloo(descarta) {
+        document.getElementById("shadalooUI").style.display = "none";
+        document.getElementById("btnIA").disabled = false;
+        document.getElementById("btnJugador").disabled = false;
+        document.getElementById("btnDistMenos").disabled = false;
+        document.getElementById("btnDistMas").disabled = false;
+        
+        if(descarta) {
+            log("Has descartado una copia. ¡Bison capitaliza e inicia un Asalto Inmediato!");
+            let valid = state.hand.filter(c => {
+                let maxR = c.r[1] + (state.activeBoostBison && state.activeBoostBison.boost.includes("+1 Range") ? 1 : 0);
+                return state.r >= c.r[0] && state.r <= maxR;
+            });
+            prepStrike(valid);
+        } else {
+            log("Revelas tu mano sin copias. Bison no encuentra su objetivo y termina su turno.");
+            finishPassiveTurn();
+        }
+    }
+
+    // --- IA DE TURNO ---
+    function iaBisonTurno() {
+        state.active = "BISON";
+        
+        // 1. Exceed
+        if (state.gauge.length >= 3 && !state.exc) {
+            state.exc = true; state.discard.push(...state.gauge.splice(0,3));
+            log("¡BISON ACTIVA MODO EXCEED!"); 
+            let count = Math.min(3, state.hand.length);
+            for(let i=0; i<count; i++) { state.gauge.push(state.hand.pop()); drawCard(); }
+            log(`Acción Gratuita Exceed: Bison carga ${count} al Gauge y roba ${count}.`);
+            finishPassiveTurn();
+            return;
+        }
+
+        // 2. Psycho Power
+        if ((state.gauge.length < 2 && state.hand.length >= 4) || state.hand.length > 6) {
+            let limit = state.exc ? 3 : 1;
+            let count = Math.min(limit, state.hand.length);
+            for(let i=0; i<count; i++) { state.gauge.push(state.hand.pop()); drawCard(); }
+            log(`Bison usa Psycho Power: Carga ${count} al Gauge y roba ${count}.`);
+            finishPassiveTurn();
+            return;
+        }
+
+        let valid = state.hand.filter(c => {
+            let maxR = c.r[1] + (state.activeBoostBison && state.activeBoostBison.boost.includes("+1 Range") ? 1 : 0);
+            return state.r >= c.r[0] && state.r <= maxR;
+        });
+
+        // 3. Jugar Boost
+        if (valid.length === 0 || Math.random() > 0.7) {
+            let boostable = state.hand.filter(c => !state.activeBoostBison || !c.boost.includes("Cont:"));
+            if (boostable.length > 0) {
+                let b = boostable.pop(); 
+                
+                if (b.boost.includes("Unstoppable") || b.boost.includes("Psycho Power")) {
+                    if (state.hand.length > 1) { state.discard.push(state.hand.shift()); log(`IA paga 1 Force para Boost ${b.n}.`); }
+                    else if (state.gauge.length > 0) { state.discard.push(state.gauge.pop()); log(`IA paga 1 Gauge para Boost ${b.n}.`); }
+                    else { state.hand.unshift(b); prepStrike(valid); return; }
+                }
+
+                state.hand.splice(state.hand.indexOf(b), 1);
+                
+                if (b.boost.includes("Cont:")) { 
+                    if (state.activeBoostBison) {
+                        state.discard.push(state.activeBoostBison);
+                        log("Se descarta el Boost anterior.");
+                    }
+                    state.activeBoostBison = b; log(`IA juega Boost: ${b.n} (${b.boost})`); 
+                    finishPassiveTurn(); return;
+                } else { 
+                    log(`IA usa Boost Instantáneo: ${b.n} (${b.boost})`);
+                    if(b.n === "Devil Reverse") { 
+                        let pHand = parseInt(document.getElementById("pHand").value) || 5;
+                        if(pHand > state.hand.length) { drawCard(); drawCard(); drawCard(); log("Bison Dollars: Roba 3 cartas extra."); }
+                        state.gauge.push(b);
+                    } else if(b.n === "Sliding Kick") { 
+                        modDist(2);
+                        if(state.r === 3) { 
+                            log("Quick Backdash a Rango 3: Toma otra acción gratis."); 
+                            state.discard.push(b);
+                            setTimeout(() => iaBisonTurno(), 1000); 
+                            return; 
+                        }
+                        else state.discard.push(b);
+                    } else if(b.n === "Somersault Skull Diver") { 
+                        state.discard.push(b);
+                        mostrarShadalooPrompt();
+                        return; 
+                    } else if(b.n === "Nightmare Booster") { 
+                        for(let i=0; i<3; i++) { if(state.discard.length>0) state.gauge.push(state.discard.pop()); }
+                        log("Psycho Booster: Añade 3 del descarte al Gauge.");
+                    } else if(b.n === "Psycho Punisher") { 
+                        moverHacia(calcularRangoIdeal(), 5); state.discard.push(b);
+                    }
+                    finishPassiveTurn(); return;
+                }
+            }
+        }
+
+        // 4. Move
+        if (valid.length === 0 && state.hand.length > 0) {
+            state.hand.sort((a,b) => a.f - b.f); let c = state.hand.shift(); state.discard.push(c);
+            let ideal = calcularRangoIdeal(); moverHacia(ideal, c.f);
+            log(`Bison descarta ${c.n} para moverse hacia Rango ${ideal}.`);
+            finishPassiveTurn(); return;
+        }
+
+        prepStrike(valid);
+    }
+
+    function strikeManual() { prepStrike(state.hand.filter(c => state.r >= c.r[0] && state.r <= c.r[1])); }
+
+    function prepStrike(valid) {
+        state.isWild = false; state.isEX = false; state.bisonHit = false; state.stunnedB = false; state.stunnedP = false;
+        
+        if (valid.length === 0) {
+            state.isWild = true; 
+            if (state.deck.length === 0) {
+                if (state.res) { document.getElementById("winText").innerText="DERROTA POR FATIGA"; document.getElementById("gameOver").style.display="flex"; return; }
+                state.deck = [...state.discard]; state.discard = []; state.deck.sort(() => Math.random() - 0.5); state.res = true;
+                log("!! Mazo vacío preparándose para Wild Swing. Bison rebaraja.");
+            }
+            state.curr = JSON.parse(JSON.stringify(state.deck.pop())); 
+            log("¡Bison ejecuta un WILD SWING!");
+        } else {
+            let counts = {}; valid.forEach(c => counts[c.n] = (counts[c.n] || 0) + 1);
+            // PARCHE: Prohibición de Ultras para EX
+            let ex = Object.keys(counts).find(k => counts[k] >= 2 && !valid.find(c => c.n === k).ultra);
+            if (ex && (state.gauge.length >= 1 || state.hand.length >= 3)) {
+                state.isEX = true;
+                
+                let c1 = valid.splice(valid.findIndex(c => c.n === ex), 1)[0];
+                state.hand.splice(state.hand.indexOf(c1), 1);
+                let c2 = state.hand.splice(state.hand.findIndex(c => c.n === ex), 1)[0];
+                state.discard.push(c2);
+                
+                if(state.gauge.length >= 1) {
+                    state.discard.push(state.gauge.pop());
+                } else {
+                    state.hand.sort((a,b) => a.f - b.f);
+                    state.discard.push(state.hand.shift());
+                }
+                
+                state.curr = JSON.parse(JSON.stringify(c1));
+                state.curr.s += 1; state.curr.p += 1; state.curr.g += 1; state.curr.a += 1;
+                log(`¡ATAQUE EX Preparado! Modificadores base aplicados.`);
+            } else {
+                state.curr = JSON.parse(JSON.stringify(valid[0]));
+                state.hand.splice(state.hand.indexOf(valid[0]), 1);
+            }
+        }
+        
+        if (state.activeBoostBison) {
+            let b = state.activeBoostBison.boost;
+            if(b.includes("+2 Speed")) state.curr.s += 2;
+            if(b.includes("+2 Power")) state.curr.p += 2;
+            if(b.includes("+1 Armor")) state.curr.a += 1;
+            if(b.includes("Psycho Power")) {
+                let bn = Math.min(5, state.gauge.length); state.curr.p += bn; 
+                log(`Boost Psycho Power activo: +${bn} Poder.`);
+            }
+            if(b.includes("Unstoppable")) {
+                state.curr.ignoreStun = true; state.isCrit = true; 
+                log(`Boost Unstoppable activo: Inmunidad a Stun y Ataque Crítico.`);
+            }
+        }
+
+        document.getElementById("strikeUI").style.display = "block"; document.getElementById("btnReveal").style.display = "block";
+        document.getElementById("inputs").style.display = "flex"; document.getElementById("stepBefore").style.display = "none";
+        document.getElementById("stepResolve").style.display = "none"; document.getElementById("stepAfter").style.display = "none";
+        document.getElementById("stepClean").style.display = "none";
+    }
+
+    function revelar() {
+        if (state.curr.ultra) {
+            if (state.gauge.length >= state.curr.cost) { 
+                state.discard.push(...state.gauge.splice(0, state.curr.cost)); 
+            } else { 
+                state.discard.push(state.curr); 
+                log(`No puede pagar el Ultra. Revela otra carta.`);
+                if (state.deck.length === 0) {
+                    if (state.res) { document.getElementById("winText").innerText="DERROTA POR FATIGA"; document.getElementById("gameOver").style.display="flex"; return; }
+                    state.deck = [...state.discard]; state.discard = []; state.deck.sort(() => Math.random() - 0.5); state.res = true;
+                    log("!! Mazo vacío en cadena de Wild Swing. Bison rebaraja.");
+                }
+                state.curr = JSON.parse(JSON.stringify(state.deck.pop())); 
+                return revelar(); 
+            }
+        }
+        if (state.curr.crit && state.gauge.length > 0 && !state.isWild && !(state.activeBoostBison && state.activeBoostBison.boost.includes("Unstoppable"))) {
+            state.discard.push(state.gauge.pop()); log("¡Bison gasta Gauge para activar CRITICAL!"); state.isCrit = true;
+        }
+        document.getElementById("bisonCard").innerHTML = `<b>${state.curr.n}</b> [SPD:${state.curr.s} POW:${state.curr.p} GRD:${state.curr.g} ARM:${state.curr.a}]<br><small>${state.curr.e}</small>`;
+        document.getElementById("btnReveal").style.display = "none"; document.getElementById("inputs").style.display = "none";
+        document.getElementById("stepBefore").style.display = "block";
+    }
+
+    function procesarFaseUI(f) {
+        let ideal = calcularRangoIdeal();
+        if(f==='BEFORE') { 
+            if(state.curr.n === "Assault") modDist(-2);
+            if(state.curr.n === "Dive") modDist(-1);
+            if(state.curr.n === "Sliding Kick") modDist(-2);
+            if(state.curr.n === "Psycho Punisher") modDist(-2);
+            if(state.curr.n === "Psycho Crusher") modDist(-3);
+            if(state.curr.n === "Somersault Skull Diver") modDist(-2);
+            
+            document.getElementById("stepBefore").style.display="none"; document.getElementById("stepResolve").style.display="block";
+        }
+        if(f==='AFTER') {
+            if(!state.stunnedB) {
+                if(state.curr.n === "Focus") drawCard();
+                if(state.curr.n === "Cross") modDist(2);
+                if(state.curr.n === "Devil Reverse") modDist(2);
+                if(state.curr.n === "Nightmare Booster") modDist(-2);
+                if(state.curr.n === "Head Stomp") {
+                    modDist(-2); 
+                    if(state.stunnedP) { moverHacia(calcularRangoIdeal(), 2); log("Efecto Head Stomp: Como estás aturdido, Bison te reposiciona tácticamente."); }
+                }
+            }
+            document.getElementById("stepAfter").style.display="none"; document.getElementById("stepClean").style.display="block";
+        }
+    }
+
+    function resolverFaseHit() {
+        if(state.bisonHit) {
+            let ideal = calcularRangoIdeal();
+            if(state.curr.n === "Grasp" || state.curr.n === "Sweep") modDist(1);
+            if(state.curr.n === "Somersault Skull Diver") modDist(2); 
+            if(state.curr.n === "Sliding Kick" && state.isCrit) modDist(2); 
+            if(state.curr.n === "Psycho Crusher" && state.isCrit) { moverHacia(ideal, 3); log("Psycho Crusher Crit: Robo carta por efecto Hit."); drawCard(); }
+            if(state.curr.n === "Devil Reverse" && state.isCrit) moverHacia(ideal, 3);
+        }
+    }
+
+    function compararVelocidad() {
+        let pS = parseInt(document.getElementById("pSpeed").value);
+        if (state.curr.s > pS || (state.curr.s === pS && state.active === "BISON")) {
+            if (state.r >= state.curr.r[0] && state.r <= state.curr.r[1]) { 
+                state.bisonHit = true; resolverFaseHit();
+                let bonusP = 0; if (state.isCrit && (state.curr.n === "Sliding Kick" || state.curr.n === "Psycho Punisher" || state.curr.n === "Head Stomp" || state.curr.n === "Somersault Skull Diver")) bonusP = (state.curr.n==="Sliding Kick" || state.curr.n==="Psycho Punisher") ? 2 : 1;
+                impactar("PLAYER", state.curr.p + bonusP, state.curr.n === "Somersault Skull Diver" && state.isCrit); 
+            }
+            if (!state.bisonHit || !state.stunnedP) {
+                if(!(state.isCrit && state.curr.n === "Nightmare Booster")) impactar("BISON", parseInt(document.getElementById("pDmg").value));
+            }
+        } else {
+            state.stunnedB = impactar("BISON", parseInt(document.getElementById("pDmg").value));
+            if (!state.stunnedB && state.r >= state.curr.r[0] && state.r <= state.curr.r[1]) { 
+                state.bisonHit = true; resolverFaseHit();
+                let bonusP = 0; if (state.isCrit && (state.curr.n === "Sliding Kick" || state.curr.n === "Psycho Punisher" || state.curr.n === "Head Stomp" || state.curr.n === "Somersault Skull Diver")) bonusP = (state.curr.n==="Sliding Kick" || state.curr.n==="Psycho Punisher") ? 2 : 1;
+                impactar("PLAYER", state.curr.p + bonusP, state.curr.n === "Somersault Skull Diver" && state.isCrit); 
+            }
+        }
+        document.getElementById("stepResolve").style.display="none"; document.getElementById("stepAfter").style.display="block";
+    }
+
+    function impactar(t, p, ignoreArmor = false) {
+        let g = t==="BISON" ? state.curr.g + (state.isCrit && state.curr.n==="Somersault Skull Diver" ? 6 : 0) : parseInt(document.getElementById("pGuard").value);
+        let a = t==="BISON" ? state.curr.a : (ignoreArmor ? 0 : parseInt(document.getElementById("pArmor").value));
+        let d = Math.max(0, p - a);
+        if(t==="BISON") { 
+            state.hpB -= d; 
+            if(d > g && !state.curr.ignoreStun) return true; 
+        } else { 
+            state.hpP -= d; 
+            if(d > g) { state.stunnedP = true; log("¡EL JUGADOR QUEDA ATURDIDO!"); } 
+        }
+        updateUI(); return false;
+    }
+
+    function limpiar() {
+        if (state.bisonHit) { state.gauge.push(state.curr); if(state.activeBoostBison && state.activeBoostBison.boost.includes("Advantage on Hit")) state.adv = "BISON"; } 
+        else { state.discard.push(state.curr); }
+        
+        if (state.activeBoostBison) { 
+            if (state.activeBoostBison.boost.includes("Sustain") && !state.activeBoostBison.sustainedUsed) { state.activeBoostBison.sustainedUsed = true; } 
+            else { state.discard.push(state.activeBoostBison); state.activeBoostBison = null; }
+        }
+        
+        document.getElementById("strikeUI").style.display="none"; checkHandLimit(); 
+        log("Siguiente Turno: " + (state.adv !== "NINGUNA" ? state.adv : (state.active==="BISON"?"JUGADOR":"BISON")));
+        state.adv = "NINGUNA"; updateUI();
+    }
+
+    function toggleAdv() { const l = ["NINGUNA", "PLAYER", "BISON"]; state.adv = l[(l.indexOf(state.adv)+1)%3]; updateUI(); }
+    
+    function modDist(v) { state.r = Math.max(1, Math.min(8, state.r + v)); updateUI(); }
+
+    for(let i=0; i<30; i++) state.deck = JSON.parse(JSON.stringify(db.concat(db))); 
     state.deck.sort(() => Math.random() - 0.5);
-    for(let i=0; i<5; i++) drawCard();
-    updateUI();
+    for(let i=0; i<5; i++) drawCard(); updateUI();
 </script>
 </body>
 </html>
