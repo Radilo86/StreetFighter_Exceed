@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exceed Automa: M. Bison Final Tournament Edition</title>
+    <title>Exceed Automa: M. Bison Master Edition v3.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root { --sf-yellow: #fdd835; --sf-red: #d32f2f; --sf-blue: #1565c0; --bg-dark: #0a0a0a; --panel-bg: #1a1a24; --text-light: #f5f5f5; --exceed-purple: #9c27b0; }
@@ -57,13 +57,13 @@
         <button class="btn" style="width:200px; margin-top:20px;" onclick="resetGame()">NUEVA PARTIDA</button>
     </div>
 
-    <h1>EXCEED AUTOMA: M. BISON (MASTER EDITION)</h1>
+    <h1>EXCEED AUTOMA: M. BISON (MASTER EDITION v3)</h1>
 
     <div class="grid-container">
         <div class="panel" id="mainPanel">
             <div style="display:flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 5px; color: #aaa; font-size: 0.8rem; gap: 5px;">
-                <span>MAZO: <b id="deckCount" style="color:white">30</b></span>
-                <span>MANO: <b id="handCount" style="color:white">0</b></span>
+                <span>MAZO: <b id="deckCount" style="color:white">24</b></span>
+                <span>MANO: <b id="handCount" style="color:white">6</b></span>
                 <span style="color:var(--sf-yellow)">GAUGE: <b id="gaugeCount" style="color:white">0</b></span>
                 <span style="cursor:pointer; text-decoration:underline;" onclick="verDescartes()">DESCARTES: <b id="discardCount" style="color:white">0</b></span>
             </div>
@@ -107,7 +107,7 @@
             <div class="log-box" id="log"></div>
             
             <div id="strikeUI" class="strike-ui">
-                <div id="bisonCard" style="background:#111; padding:10px; border-left:4px solid var(--sf-red); margin-bottom:10px; line-height:1.4;"></div>
+                <div id="bisonCard" style="background:#111; padding:10px; margin-bottom:10px; line-height:1.4;"></div>
                 <div id="inputs" style="display:flex; justify-content:space-around; margin-bottom:15px; background:#000; padding:10px; border:1px solid #444;">
                     <div class="stat-block"><span style="font-size:0.7rem; margin-bottom:3px; color:#aaa;">SPEED</span><input type="number" id="pSpeed" value="5" min="0"></div>
                     <div class="stat-block"><span style="font-size:0.7rem; margin-bottom:3px; color:#aaa;">POWER</span><input type="number" id="pDmg" value="4" min="0"></div>
@@ -126,9 +126,8 @@
     </div>
 
 <script>
-    // --- MANEJO DE ERRORES GLOBAL ---
     window.onerror = function(msg, url, lineNo, columnNo, error) {
-        let errStr = `<span style="color:red">ERROR CRÍTICO EVITADO: ${msg} (Línea ${lineNo})</span>`;
+        let errStr = `<span style="color:red">ERROR EVITADO: ${msg}</span>`;
         const l = document.getElementById("log");
         if(l) { l.innerHTML += `> ${errStr}<br>`; l.scrollTop = l.scrollHeight; }
         return false;
@@ -150,8 +149,8 @@
         { n: "Sliding Kick", s: 5, p: 4, r: [1,1], g: 3, a: 0, f: 2, boost: "Inst: Quick Backdash", crit: true, e: "Before: Close 2. Crit, Hit: +2 Power and Push 2." },
         { n: "Somersault Skull Diver", s: 4, p: 4, r: [1,1], g: 0, a: 0, f: 2, boost: "Inst: Shadaloo Intelligence", crit: true, e: "Crit: +1 Power, +6 Guard, Ignore Armor. Before: Advance 1 or 2. Hit: Push 2." },
         
-        { n: "Nightmare Booster", s: 6, p: 6, r: [2,3], g: 0, a: 0, f: 3, ultra: true, cost: 3, crit: true, boost: "Inst: Psycho Booster", e: "Crit, Hit: Opp attack misses. After: Close 1 or 2." },
-        { n: "Psycho Punisher", s: 4, p: 7, r: [1,2], g: 4, a: 0, f: 3, ultra: true, cost: 3, crit: true, boost: "Inst: Bison Teleport", e: "Before: Close 2. Crit, Hit: +2 Power and gain Advantage." }
+        { n: "Nightmare Booster", s: 6, p: 6, r: [2,3], g: 0, a: 0, f: 2, ultra: true, cost: 3, crit: true, boost: "Inst: Psycho Booster", e: "Crit, Hit: Opp attack misses. After: Close 1 or 2." },
+        { n: "Psycho Punisher", s: 4, p: 7, r: [1,2], g: 4, a: 0, f: 2, ultra: true, cost: 3, crit: true, boost: "Inst: Bison Teleport", e: "Before: Close 2. Crit, Hit: +2 Power and gain Advantage." }
     ];
 
     const defaultState = { 
@@ -163,26 +162,10 @@
     
     let state = JSON.parse(JSON.stringify(defaultState));
 
-    // --- FUNCIONES CORE Y UTILIDADES ---
-    function setTextSafe(id, text) {
-        let el = document.getElementById(id);
-        if(el) el.innerText = text;
-    }
-    
-    function setHtmlSafe(id, html) {
-        let el = document.getElementById(id);
-        if(el) el.innerHTML = html;
-    }
-
-    function setWidthSafe(id, percent) {
-        let el = document.getElementById(id);
-        if(el) el.style.width = Math.max(0, Math.min(100, percent)) + "%";
-    }
-
-    function setDisplaySafe(id, displayType) {
-        let el = document.getElementById(id);
-        if(el) el.style.display = displayType;
-    }
+    function setTextSafe(id, text) { let el = document.getElementById(id); if(el) el.innerText = text; }
+    function setHtmlSafe(id, html) { let el = document.getElementById(id); if(el) el.innerHTML = html; }
+    function setWidthSafe(id, percent) { let el = document.getElementById(id); if(el) el.style.width = Math.max(0, Math.min(100, percent)) + "%"; }
+    function setDisplaySafe(id, displayType) { let el = document.getElementById(id); if(el) el.style.display = displayType; }
 
     function saveState() {
         try {
@@ -200,29 +183,18 @@
         try {
             const savedState = localStorage.getItem('exceedBisonState');
             const savedEco = localStorage.getItem('exceedPlayerEco');
-            
             if (savedState) {
-                let parsed = JSON.parse(savedState);
-                state = { ...defaultState, ...parsed };
-                
+                state = { ...defaultState, ...JSON.parse(savedState) };
                 if(savedEco) {
                     let eco = JSON.parse(savedEco);
-                    let hEl = document.getElementById("pHand");
-                    let gEl = document.getElementById("pGauge");
-                    if (hEl) hEl.value = eco.h || 5;
-                    if (gEl) gEl.value = eco.g || 0;
+                    let hEl = document.getElementById("pHand"); let gEl = document.getElementById("pGauge");
+                    if (hEl) hEl.value = eco.h || 5; if (gEl) gEl.value = eco.g || 0;
                 }
-                
                 if (!state.mulliganDone) setDisplaySafe("mulliganModal", "flex");
                 updateUI();
                 log("Partida recuperada de memoria local.");
-            } else {
-                initGame();
-            }
-        } catch(e) {
-            log("Fallo al leer partida guardada. Iniciando partida nueva.");
-            initGame();
-        }
+            } else initGame();
+        } catch(e) { log("Fallo al leer partida guardada. Iniciando nueva."); initGame(); }
     }
 
     function realizarMulliganIA() {
@@ -243,11 +215,12 @@
 
     function finalizarMulligan() {
         let inputMulligan = document.getElementById("mulliganCount");
-        let desc = inputMulligan ? (parseInt(inputMulligan.value) || 0) : 0;
+        let desc = inputMulligan ? parseInt(inputMulligan.value) : 0;
+        if(isNaN(desc) || desc < 0) desc = 0;
         if (desc > 0) log(`Jugador hace Mulligan: cambia ${desc} cartas.`);
         state.mulliganDone = true;
         setDisplaySafe("mulliganModal", "none");
-        log("<b>¡FIGHT!</b>");
+        log("<b>¡FIGHT!</b> (El Jugador empieza el primer turno)");
         updateUI();
     }
 
@@ -255,17 +228,14 @@
         state = JSON.parse(JSON.stringify(defaultState));
         state.deck = JSON.parse(JSON.stringify(db.concat(db))); 
         state.deck.sort(() => Math.random() - 0.5);
-        for(let i=0; i<5; i++) state.hand.push(state.deck.pop());
+        for(let i=0; i<6; i++) state.hand.push(state.deck.pop());
         realizarMulliganIA(); 
         setDisplaySafe("mulliganModal", "flex");
         updateUI();
     }
 
     function resetGame() {
-        try {
-            localStorage.removeItem('exceedBisonState');
-            localStorage.removeItem('exceedPlayerEco');
-        } catch(e) {}
+        try { localStorage.removeItem('exceedBisonState'); localStorage.removeItem('exceedPlayerEco'); } catch(e) {}
         location.reload();
     }
 
@@ -279,10 +249,7 @@
 
     function modEco(id, val) {
         let el = document.getElementById(id);
-        if(el) {
-            el.value = Math.max(0, (parseInt(el.value) || 0) + val);
-            saveState();
-        }
+        if(el) { el.value = Math.max(0, (parseInt(el.value) || 0) + val); saveState(); }
     }
 
     function verDescartes() {
@@ -292,9 +259,7 @@
         setDisplaySafe("discardModal", "flex");
     }
     
-    function cerrarDescartes() { 
-        setDisplaySafe("discardModal", "none"); 
-    }
+    function cerrarDescartes() { setDisplaySafe("discardModal", "none"); }
 
     function chequearGameOver() {
         if (state.hpP <= 0 || state.hpB <= 0) {
@@ -306,16 +271,10 @@
     }
 
     function updateUI() {
-        setTextSafe("pHPText", state.hpP); 
-        setTextSafe("bHPText", state.hpB);
-        setWidthSafe("pHPFill", (state.hpP/30*100)); 
-        setWidthSafe("bHPFill", (state.hpB/30*100));
-        
-        setTextSafe("deckCount", (state.deck || []).length); 
-        setTextSafe("handCount", (state.hand || []).length);
-        setTextSafe("gaugeCount", (state.gauge || []).length);
-        setTextSafe("discardCount", (state.discard || []).length);
-        
+        setTextSafe("pHPText", state.hpP); setTextSafe("bHPText", state.hpB);
+        setWidthSafe("pHPFill", (state.hpP/30*100)); setWidthSafe("bHPFill", (state.hpB/30*100));
+        setTextSafe("deckCount", (state.deck || []).length); setTextSafe("handCount", (state.hand || []).length);
+        setTextSafe("gaugeCount", (state.gauge || []).length); setTextSafe("discardCount", (state.discard || []).length);
         setTextSafe("rangeText", state.r);
         
         let elAdv = document.getElementById("btnAdv");
@@ -323,7 +282,6 @@
             elAdv.innerText = "VENTAJA: " + state.adv;
             elAdv.style.color = state.adv === "BISON" ? "var(--sf-red)" : (state.adv === "PLAYER" ? "var(--sf-blue)" : "white");
         }
-        
         setTextSafe("bBoostText", state.activeBoostBison ? state.activeBoostBison.n + " ("+state.activeBoostBison.boost+")" : "Ninguno");
         
         let mp = document.getElementById("mainPanel");
@@ -331,11 +289,8 @@
             if(state.exc) mp.classList.add("exceed-active");
             else mp.classList.remove("exceed-active");
         }
-        
         if (state.exc) setDisplaySafe("exceedBadge", "block");
-        
-        chequearGameOver();
-        saveState();
+        chequearGameOver(); saveState();
     }
 
     function modDist(v) { state.r = Math.max(1, Math.min(8, state.r + v)); updateUI(); }
@@ -347,12 +302,16 @@
 
     function drawCard() {
         if (state.deck.length === 0) {
-            if (state.res) { state.hpB -= 1; log("¡BISON SUFRE DAÑO POR FATIGA EXTREMA!"); chequearGameOver(); return; }
+            // Regla oficial Muerte Súbita Exceed: Si debes robar, tu mazo está vacío y ya has rebarajado.
+            if (state.discard.length === 0 || state.res) { 
+                state.hpB = 0; log("¡BISON DEBE ROBAR PERO SU MAZO ESTÁ VACÍO Y YA REBARAJÓ! ¡PIERDE LA PARTIDA!"); 
+                chequearGameOver(); return false; 
+            }
             state.deck = [...state.discard]; state.discard = []; state.deck.sort(() => Math.random() - 0.5); state.res = true;
-            log("M. Bison rebaraja sus descartes formando un nuevo mazo.");
+            log("M. Bison rebaraja sus descartes formando un nuevo mazo (Única vez por partida).");
         }
         if (state.deck.length > 0) state.hand.push(state.deck.pop());
-        updateUI();
+        updateUI(); return true;
     }
 
     function checkHandLimit() {
@@ -365,39 +324,28 @@
         updateUI();
     }
 
-    // --- MOTOR TÁCTICO DE AGRESIVIDAD PREDICTIVA ---
+    function faseFinalTurno() {
+        let extraDraws = 0;
+        if (state.activeBoostBison && state.activeBoostBison.boost.includes("Psycho Power")) extraDraws++;
+        if (state.exc) extraDraws++; 
+        for(let i = 0; i < extraDraws; i++) { log("Habilidad Pasiva (Psycho Power/Exceed): Bison roba 1 carta adicional."); drawCard(); }
+        checkHandLimit();
+    }
+
     function calcularAgresividad() {
         let aggro = 50; 
-        let pHandEl = document.getElementById("pHand");
-        let pGaugeEl = document.getElementById("pGauge");
-        let pHand = pHandEl ? (parseInt(pHandEl.value) || 0) : 0;
-        let pGauge = pGaugeEl ? (parseInt(pGaugeEl.value) || 0) : 0;
+        let pHand = parseInt(document.getElementById("pHand")?.value) || 0;
+        let pGauge = parseInt(document.getElementById("pGauge")?.value) || 0;
 
-        if (state.adv === "BISON") aggro += 30; 
-        if (state.adv === "PLAYER") aggro -= 25; 
-        if (pHand <= 2) aggro += 25; 
-        if (pHand >= 6) aggro -= 15; 
-        if (pGauge >= 2) aggro -= 20; 
-        if (state.hand.length > 5) aggro += 10; 
+        if (state.adv === "BISON") aggro += 30; if (state.adv === "PLAYER") aggro -= 25; 
+        if (pHand <= 2) aggro += 25; if (pHand >= 6) aggro -= 15; 
+        if (pGauge >= 2) aggro -= 20; if (state.hand.length > 5) aggro += 10; 
         if (state.hand.length < 3) aggro -= 20; 
-        
         if (state.gauge.length >= 3 && state.hand.some(c => c.ultra)) aggro += 40; 
         if (state.gauge.length > 0 && state.hand.some(c => c.crit)) aggro += 15; 
         if (state.exc) aggro += 20;
 
         return aggro;
-    }
-
-    function calcularRangoDinamico() {
-        if (state.hand.length === 0) return 4;
-        let rangosRequeridos = [];
-        state.hand.forEach(c => {
-            if(c.r && !c.ultra) rangosRequeridos.push(Math.round((c.r[0] + c.r[1])/2));
-            if(c.ultra && state.gauge.length >= c.cost) rangosRequeridos.push(c.r[0]); 
-        });
-        if (rangosRequeridos.length === 0) return 4;
-        rangosRequeridos.sort((a,b) => rangosRequeridos.filter(v => v===a).length - rangosRequeridos.filter(v => v===b).length);
-        return rangosRequeridos.pop(); 
     }
 
     function iaBisonTurno() {
@@ -406,10 +354,10 @@
         
         if (state.gauge.length >= 3 && !state.exc) {
             state.exc = true; state.discard.push(...state.gauge.splice(0,3));
-            log("¡BISON DESATA SU PODER Y ACTIVA MODO EXCEED! (Paga 3 Gauge)."); 
+            log("¡BISON ACTIVA MODO EXCEED! (Paga 3 Gauge). Pierde turno de acción."); 
             let count = Math.min(3, state.hand.length);
             for(let i=0; i<count; i++) { state.gauge.push(state.hand.pop()); drawCard(); }
-            drawCard(); checkHandLimit(); return;
+            drawCard(); faseFinalTurno(); return;
         }
 
         let valid = state.hand.filter(c => {
@@ -419,64 +367,50 @@
         });
 
         let aggroScore = calcularAgresividad();
-        log(`IA Predictiva -> Nivel de Agresividad: ${aggroScore}/100`);
+        log(`Nivel de Agresividad Predictiva: ${aggroScore}/100`);
 
-        if (aggroScore >= 60 && valid.length > 0) {
-            prepStrike(valid); return;
-        }
+        if (aggroScore >= 60 && valid.length > 0) { prepStrike(valid); return; }
 
         let boostable = state.hand.filter(c => !state.activeBoostBison || (c.boost && !c.boost.includes("Cont:") && !c.boost.includes("Fierce:")));
         if (boostable.length > 0 && Math.random() > 0.3) {
-            let b = boostable.pop(); 
-            state.hand.splice(state.hand.indexOf(b), 1);
-            
+            let b = boostable.pop(); state.hand.splice(state.hand.indexOf(b), 1);
             if (b.boost && (b.boost.includes("Cont:") || b.boost.includes("Fierce:"))) { 
                 if (state.activeBoostBison) state.discard.push(state.activeBoostBison);
                 state.activeBoostBison = b; state.sustainedUsed = false;
                 log(`IA Juega Boost Activo: [${b.n}] (${b.boost})`); 
             } else { 
                 state.discard.push(b); log(`IA Juega Boost Instantáneo: [${b.n}] (${b.boost || ''})`);
-                if (b.n === "Sliding Kick" || b.n === "Nightmare Booster") closeDist(2);
-                if (b.n === "Devil Reverse" || b.n === "Psycho Crusher") { 
-                    log("Boost Instantáneo: Bison gana 1 Gauge y roba 1 Carta.");
-                    if(state.deck.length > 0) state.gauge.push(state.deck.pop()); 
-                    drawCard(); 
-                }
+                if (b.n === "Sliding Kick") { modDist(2); }
+                if (b.n === "Nightmare Booster") { closeDist(2); }
+                if (b.n === "Devil Reverse" || b.n === "Psycho Crusher") { if(state.deck.length > 0) state.gauge.push(state.deck.pop()); drawCard(); }
             }
-            drawCard(); checkHandLimit(); return;
+            drawCard(); faseFinalTurno(); return;
         }
 
-        let rangoIdeal = calcularRangoDinamico();
-        let movPosible = state.hand.length > 0 ? (state.hand[0].f || 0) : 0; 
-        
-        if (movPosible > 0 && state.r !== rangoIdeal) {
-            let c = state.hand.shift(); state.discard.push(c);
-            let diff = rangoIdeal - state.r; let moves = Math.min(Math.abs(diff), movPosible);
-            if (diff > 0) modDist(moves); else modDist(-moves);
-            log(`IA Paga Force (Descarta 1) para moverse a Rango ${state.r}.`);
-            drawCard(); checkHandLimit(); return;
+        if (state.deck.length > 4 && state.hand.length > 0) {
+            let movPosible = state.hand[0].f || 0; 
+            let rangoIdeal = state.hand.length > 0 && state.hand[0].r ? state.hand[0].r[0] : 4;
+            
+            if (movPosible > 0 && state.r !== rangoIdeal) {
+                let c = state.hand.shift(); state.discard.push(c);
+                let diff = rangoIdeal - state.r; let moves = Math.min(Math.abs(diff), movPosible);
+                if (diff > 0) modDist(moves); else modDist(-moves);
+                log(`IA Gasta Force para Moverse ${moves} espacio(s) al rango ${state.r}.`);
+            } else {
+                let c = state.hand.shift(); state.discard.push(c);
+                log(`IA Paga Force para Cambiar 1 Carta de su mano.`);
+            }
+        } else {
+            log("IA Conserva recursos (Pasa turno / Roba).");
         }
-
-        if (state.hand.length > 0) {
-            let c = state.hand.shift(); state.discard.push(c);
-            log(`IA Paga Force para Cambiar Carta de su mano.`);
-        }
-        drawCard(); checkHandLimit();
+        drawCard(); faseFinalTurno();
     }
 
-    // --- RESOLUCIÓN MATEMÁTICA CENTRALIZADA (EX / CRIT) ---
     function aplicarModificadores() {
         if(!state.curr) return;
-        
         state.curr.ignoreStun = false; state.curr.ignoreArmor = false;
-
-        if (state.exc && state.curr.crit) {
-            state.isCrit = true; 
-        }
-
-        if (state.isEX) {
-            state.curr.s += 1; state.curr.p += 1; state.curr.g += 1; state.curr.a += 1;
-        }
+        if (state.exc && state.curr.crit) state.isCrit = true; 
+        if (state.isEX) { state.curr.s += 1; state.curr.p += 1; state.curr.g += 1; state.curr.a += 1; }
 
         if (state.isCrit) {
             if (state.curr.n === "Spike") state.curr.ignoreStun = true;
@@ -495,16 +429,19 @@
         }
     }
 
-    // --- FLUJO DE COMBATE (STRIKE) SEGURO ---
     function setCombatButtons(disabledState) {
-        let btnIA = document.getElementById("btnIA");
-        let btnJugador = document.getElementById("btnJugador");
-        if(btnIA) btnIA.disabled = disabledState;
-        if(btnJugador) btnJugador.disabled = disabledState;
+        let btnIA = document.getElementById("btnIA"); let btnJugador = document.getElementById("btnJugador");
+        if(btnIA) btnIA.disabled = disabledState; if(btnJugador) btnJugador.disabled = disabledState;
+    }
+
+    function abortarAsalto() {
+        setDisplaySafe("strikeUI", "none"); 
+        setCombatButtons(false); updateUI();
     }
 
     function strikeManual() { 
         if(chequearGameOver()) return;
+        state.active = "PLAYER";
         prepStrike(state.hand.filter(c => c.r !== null && state.r >= c.r[0] && state.r <= c.r[1])); 
     }
 
@@ -515,86 +452,68 @@
             state.isWild = true; 
             log("¡Bison desesperado ejecuta un WILD SWING!");
             if (state.deck.length === 0) {
-                if (state.res) { state.hpB -= 1; log("¡BISON SUFRE DAÑO POR FATIGA EXTREMA!"); chequearGameOver(); return; }
+                if (state.discard.length === 0 || state.res) { state.hpB = 0; log("¡BISON SE QUEDA SIN CARTAS EN WILD SWING Y PIERDE!"); chequearGameOver(); abortarAsalto(); return; }
                 state.deck = [...state.discard]; state.discard = []; state.deck.sort(() => Math.random() - 0.5); state.res = true;
             }
-            
-            let poppedCard = state.deck.pop();
-            if (!poppedCard) { log("Error: Mazo vacío. Bison no puede atacar."); return; }
-            state.curr = JSON.parse(JSON.stringify(poppedCard)); 
-            
+            state.curr = JSON.parse(JSON.stringify(state.deck.pop())); 
         } else {
             valid.sort((a,b) => (b.ultra && state.gauge.length >= b.cost ? 100 : b.p) - (a.ultra && state.gauge.length >= a.cost ? 100 : a.p));
             state.curr = JSON.parse(JSON.stringify(valid[0]));
             state.hand.splice(state.hand.findIndex(c => c.n === valid[0].n), 1);
 
             let dupIdx = state.hand.findIndex(c => c.n === state.curr.n && !c.ultra);
-            if (dupIdx !== -1) {
-                state.isEX = true; state.discard.push(state.hand.splice(dupIdx, 1)[0]);
-                log(`Bison descarta copia de su mano para ataque EX.`);
-            } else if (state.gauge.length >= 1 && !state.curr.ultra && Math.random() > 0.5) {
-                state.isEX = true; state.discard.push(state.gauge.shift());
-                log(`Bison gasta 1 Gauge para forzar ataque EX.`);
-            }
+            if (dupIdx !== -1) { state.isEX = true; state.discard.push(state.hand.splice(dupIdx, 1)[0]); log(`Bison empareja su ataque con copia EX.`); } 
+            else if (state.gauge.length >= 1 && !state.curr.ultra && Math.random() > 0.5) { state.isEX = true; state.discard.push(state.gauge.shift()); log(`Bison gasta Gauge para forzar un ataque EX.`); }
 
-            if (state.curr.crit && state.gauge.length >= 1 && !state.isEX && !state.exc) {
-                state.isCrit = true; state.discard.push(state.gauge.shift());
-                log(`Bison invierte 1 Gauge para desatar un ataque CRITICAL.`);
-            } else if (state.curr.crit && state.exc) {
-                log(`¡BISON DESATA UN CRÍTICO GRATIS POR SU MODO EXCEED!`);
-            }
-
+            if (state.curr.crit && state.gauge.length >= 1 && !state.isEX && !state.exc) { state.isCrit = true; state.discard.push(state.gauge.shift()); } 
+            else if (state.curr.crit && state.exc) { log(`¡El asalto será CRÍTICO por efecto de Exceed Mode!`); }
+            
             aplicarModificadores();
         }
 
-        setDisplaySafe("strikeUI", "block"); 
-        setDisplaySafe("btnReveal", "block");
-        setDisplaySafe("inputs", "flex"); 
-        setDisplaySafe("stepBefore", "none");
-        setDisplaySafe("stepResolve", "none"); 
-        setDisplaySafe("stepAfter", "none");
-        setDisplaySafe("stepClean", "none");
-        
+        setHtmlSafe("bisonCard", "<div style='text-align:center; padding:30px; border:3px dashed #666; background:#1a1a1a; color:#888; font-family:sans-serif; letter-spacing:2px;'>CARTA BOCA ABAJO</div>");
+        setDisplaySafe("strikeUI", "block"); setDisplaySafe("btnReveal", "block");
+        setDisplaySafe("inputs", "flex"); setDisplaySafe("stepBefore", "none");
+        setDisplaySafe("stepResolve", "none"); setDisplaySafe("stepAfter", "none"); setDisplaySafe("stepClean", "none");
         setCombatButtons(true);
     }
 
     function revelar() {
         if (!state.curr) return;
-        
-        if (state.curr.ultra) {
-            if (state.gauge.length >= state.curr.cost) {
-                state.discard.push(...state.gauge.splice(0, state.curr.cost));
-                log(`¡BISON GASTA ${state.curr.cost} GAUGE EN UN ULTRA!`);
-            } else {
-                log(`Ataque Inválido: Bison revela un Ultra pero no tiene el Gauge. Se descarta y realiza nuevo Wild Swing.`);
-                state.discard.push(state.curr);
-                if (state.deck.length === 0) {
-                    if (state.res) { state.hpB -= 1; log("¡Daño por Fatiga!"); chequearGameOver(); return; }
-                    state.deck = [...state.discard]; state.discard = []; state.deck.sort(() => Math.random() - 0.5); state.res = true;
+
+        while (state.curr && state.curr.ultra && state.gauge.length < state.curr.cost) {
+            log(`Ataque Inválido: Bison revela Ultra sin recursos. Se descarta y prueba de nuevo.`);
+            state.discard.push(state.curr);
+            
+            if (state.deck.length === 0) {
+                if (state.discard.length === 0 || state.res) { 
+                    state.hpB = 0; log("¡MUERTE POR ROBO EN VACÍO!"); chequearGameOver();
+                    abortarAsalto(); return; 
                 }
-                
-                let nextCard = state.deck.pop();
-                if (!nextCard) { log("Error: Mazo exhausto. Combate interrumpido."); return; }
-                state.curr = JSON.parse(JSON.stringify(nextCard));
-                
-                return revelar(); // Bucle de validación
+                state.deck = [...state.discard]; state.discard = []; state.deck.sort(() => Math.random() - 0.5); state.res = true;
             }
+            state.curr = JSON.parse(JSON.stringify(state.deck.pop()));
+        }
+
+        if (state.curr.ultra) {
+            state.discard.push(...state.gauge.splice(0, state.curr.cost));
+            log(`¡BISON DESATA UN ULTRA! (Paga ${state.curr.cost} Gauge)`);
         }
 
         if (state.isWild && state.curr) aplicarModificadores();
         
         let tags = [];
-        if (state.isEX) tags.push("EX");
-        if (state.isCrit) tags.push("CRITICAL");
-        if (state.curr.ultra) tags.push("ULTRA");
+        if (state.isEX) tags.push("EX"); if (state.isCrit) tags.push("CRITICAL"); if (state.curr.ultra) tags.push("ULTRA");
         let tagStr = tags.length > 0 ? `<span style="color:var(--sf-yellow)">[${tags.join(" ")}]</span>` : "";
 
-        let cardHtml = `<b>${state.curr.n}</b> ${tagStr}<br>[SPD:${state.curr.s} POW:${state.curr.p} GRD:${state.curr.g} ARM:${state.curr.a}]<br><small style="color:#bbb;">${state.curr.e}</small>`;
+        let cardHtml = `<div style="border-left:4px solid var(--sf-red); padding-left:10px;">
+                        <b>${state.curr.n}</b> ${tagStr}<br>
+                        [SPD:${state.curr.s} POW:${state.curr.p} GRD:${state.curr.g} ARM:${state.curr.a}]<br>
+                        <small style="color:#bbb;">${state.curr.e}</small>
+                        </div>`;
         setHtmlSafe("bisonCard", cardHtml);
         
-        setDisplaySafe("btnReveal", "none"); 
-        setDisplaySafe("inputs", "none");
-        setDisplaySafe("stepBefore", "block");
+        setDisplaySafe("btnReveal", "none"); setDisplaySafe("inputs", "none"); setDisplaySafe("stepBefore", "block");
     }
 
     function procesarFaseUI(f) {
@@ -606,19 +525,20 @@
             if(state.curr.n === "Psycho Punisher") closeDist(2);
             if(state.curr.n === "Psycho Crusher") advanceDist(3); 
             if(state.curr.n === "Somersault Skull Diver") advanceDist(2); 
-            
-            setDisplaySafe("stepBefore", "none"); 
-            setDisplaySafe("stepResolve", "block");
+            setDisplaySafe("stepBefore", "none"); setDisplaySafe("stepResolve", "block");
         }
         if(f==='AFTER') {
-            if(state.curr.n === "Focus") { drawCard(); log("Efecto Focus: Bison roba 1 carta."); }
-            if(state.curr.n === "Cross") modDist(3); 
-            if(state.curr.n === "Devil Reverse") modDist(2); 
-            if(state.curr.n === "Nightmare Booster") closeDist(2);
-            if(state.curr.n === "Head Stomp") closeDist(2); 
-            
-            setDisplaySafe("stepAfter", "none"); 
-            setDisplaySafe("stepClean", "block");
+            if (state.stunnedB) { 
+                log("X Bison está ATURDIDO. Sus efectos 'AFTER' han sido anulados."); 
+            } else {
+                if(state.curr.n === "Focus") { drawCard(); log("Efecto Focus: Bison roba 1 carta."); }
+                if(state.curr.n === "Cross") modDist(3); 
+                if(state.curr.n === "Devil Reverse") modDist(2); 
+                if(state.curr.n === "Nightmare Booster") closeDist(2);
+                if(state.curr.n === "Head Stomp") closeDist(2); 
+            }
+            if (state.stunnedP) log(">>> ADVERTENCIA: El jugador fue ATURDIDO. No resuelvas tus efectos AFTER.");
+            setDisplaySafe("stepAfter", "none"); setDisplaySafe("stepClean", "block");
         }
     }
 
@@ -628,105 +548,95 @@
             if(state.curr.n === "Sweep") modDist(1); 
             if(state.curr.n === "Somersault Skull Diver") modDist(2); 
             if(state.curr.n === "Sliding Kick" && state.isCrit) modDist(2); 
-            if(state.curr.n === "Psycho Crusher" && state.isCrit) { advanceDist(3); drawCard(); log("Critico Psycho Crusher: Advance 3 y roba carta."); }
+            if(state.curr.n === "Psycho Crusher" && state.isCrit) { advanceDist(3); drawCard(); }
             if(state.curr.n === "Devil Reverse" && state.isCrit) advanceDist(3);
         }
     }
 
     function compararVelocidad() {
-        let pSpeedEl = document.getElementById("pSpeed");
-        let pDmgEl = document.getElementById("pDmg");
-        let pS = pSpeedEl ? (parseInt(pSpeedEl.value) || 0) : 0;
-        let pD = pDmgEl ? (parseInt(pDmgEl.value) || 0) : 0;
+        let pS = parseInt(document.getElementById("pSpeed")?.value) || 0;
+        let pD = parseInt(document.getElementById("pDmg")?.value) || 0;
         let bS = state.curr.s || 0;
 
+        // RESOLUCIÓN DE EMPATE POR VENTAJA
+        let bisonGanaEmpate = false;
+        if (state.adv === "BISON") bisonGanaEmpate = true;
+        else if (state.adv === "PLAYER") bisonGanaEmpate = false;
+        else if (state.active === "BISON") bisonGanaEmpate = true; // Si no hay ventaja, gana el activo
+
         let ejecutarImpactoBison = () => {
+            if (state.stunnedB) return; // Bloqueo estricto
             if (state.curr.r !== null && state.r >= state.curr.r[0] && state.r <= state.curr.r[1]) { 
                 state.bisonHit = true; resolverFaseHit(); 
-                let bonusP = 0; 
-                if (state.isCrit && (state.curr.n === "Sliding Kick" || state.curr.n === "Psycho Punisher")) bonusP += 2; 
+                let bonusP = (state.isCrit && (state.curr.n === "Sliding Kick" || state.curr.n === "Psycho Punisher")) ? 2 : 0; 
                 impactar("PLAYER", (state.curr.p || 0) + bonusP, state.curr.ignoreArmor, false); 
-            } else if (state.curr.r !== null) {
-                log("El ataque de Bison falla por falta de rango.");
-            }
+            } else if (state.curr.r !== null) { log("El ataque de Bison falla por falta de rango."); }
         };
 
-        if (bS > pS || (bS === pS && state.active === "BISON")) {
+        if (bS > pS || (bS === pS && bisonGanaEmpate)) {
             ejecutarImpactoBison();
             if (!state.bisonHit || !state.stunnedP) { 
-                if (state.isCrit && state.curr.n === "Nightmare Booster") log("¡NIGHTMARE BOOSTER CRÍTICO! Bison esquiva tu ataque mágicamente.");
+                if (state.isCrit && state.curr.n === "Nightmare Booster") log("¡NIGHTMARE BOOSTER CRÍTICO! Bison esquiva mágicamente el golpe.");
                 else state.stunnedB = impactar("BISON", pD, false, state.curr.ignoreStun); 
             }
         } else {
-            if (state.isCrit && state.curr.n === "Nightmare Booster") log("¡NIGHTMARE BOOSTER CRÍTICO! Bison esquiva tu ataque mágicamente.");
+            if (state.isCrit && state.curr.n === "Nightmare Booster") log("¡NIGHTMARE BOOSTER CRÍTICO! Bison esquiva mágicamente el golpe.");
             else state.stunnedB = impactar("BISON", pD, false, state.curr.ignoreStun);
             
             if (!state.stunnedB) ejecutarImpactoBison();
-            else log("¡BISON FUE ATURDIDO Y PIERDE SU ATAQUE!");
+            else log("¡BISON RECIBIÓ DAÑO CRÍTICO Y QUEDÓ ATURDIDO (STUNNED)! Su contraataque se cancela.");
         }
-        setDisplaySafe("stepResolve", "none"); 
-        setDisplaySafe("stepAfter", "block");
+        setDisplaySafe("stepResolve", "none"); setDisplaySafe("stepAfter", "block");
     }
 
     function impactar(t, p, ignoreArmor=false, ignoreStun=false) {
-        let pGuardEl = document.getElementById("pGuard");
-        let pArmorEl = document.getElementById("pArmor");
-        
-        let g = t==="BISON" ? (state.curr.g || 0) : (pGuardEl ? (parseInt(pGuardEl.value) || 0) : 0);
-        let a = t==="BISON" ? (state.curr.a || 0) : (ignoreArmor ? 0 : (pArmorEl ? (parseInt(pArmorEl.value) || 0) : 0));
+        let g = t==="BISON" ? (state.curr.g || 0) : (parseInt(document.getElementById("pGuard")?.value) || 0);
+        let a = t==="BISON" ? (state.curr.a || 0) : (ignoreArmor ? 0 : (parseInt(document.getElementById("pArmor")?.value) || 0));
         
         let d = Math.max(0, p - a); 
-        if (ignoreArmor && t==="PLAYER") log(`(Ignore Armor activo) Armadura rival reducida a 0.`);
+        if (ignoreArmor && t==="PLAYER") log(`(Ignore Armor activo) Armadura del jugador reducida a 0.`);
         
         if(t==="BISON") { 
             state.hpB -= d; 
-            if(d > g && !ignoreStun) return true; 
-            else if (d > g && ignoreStun) log("¡Inmune al Aturdimiento! Bison soporta el golpe crítico y continúa.");
+            if(d > g && !ignoreStun) return true; // Retorna True provocando el STUN
+            else if (d > g && ignoreStun) log("¡Inmune al Aturdimiento! Bison soporta el impacto y continúa su ataque.");
         } else { 
             state.hpP -= d; 
-            if(d > g && !ignoreStun) { state.stunnedP = true; log(">>> ¡EL JUGADOR QUEDA ATURDIDO!"); } 
+            if(d > g && !ignoreStun) { state.stunnedP = true; log(">>> ¡EL JUGADOR QUEDA ATURDIDO (STUNNED)!"); } 
         }
         updateUI(); return false;
     }
 
     function limpiar() {
         if(!state.curr) return;
-        if (state.bisonHit) state.gauge.push(state.curr); else state.discard.push(state.curr);
+        
+        // REGLA OFICIAL: La carta usada para el asalto SIEMPRE va a la zona de Gauge, independientemente de si impactó o fue aturdido.
+        state.gauge.push(state.curr);
         
         if (state.activeBoostBison) { 
-            if (state.activeBoostBison.boost.includes("Sustain") && !state.sustainedUsed) { 
-                state.sustainedUsed = true; 
-                log("El Boost 'Focus' se Mantiene (Sustain) para el siguiente asalto.");
-            } else { 
-                state.discard.push(state.activeBoostBison); 
-                state.activeBoostBison = null; 
-                state.sustainedUsed = false;
-            }
+            if (state.activeBoostBison.boost.includes("Sustain") && !state.sustainedUsed) { state.sustainedUsed = true; log("Boost 'Focus' Mantenido (Sustain)."); } 
+            else { state.discard.push(state.activeBoostBison); state.activeBoostBison = null; state.sustainedUsed = false; }
         }
         
-        setDisplaySafe("strikeUI", "none"); 
-        setCombatButtons(false);
+        setDisplaySafe("strikeUI", "none"); setCombatButtons(false);
         
-        let ganaVentaja = false;
-        if (state.bisonHit) {
-            if (state.curr.n === "Assault") ganaVentaja = true;
-            if (state.curr.n === "Psycho Punisher" && state.isCrit) ganaVentaja = true;
-            if (state.activeBoostBison && state.activeBoostBison.boost.includes("Advantage on Hit")) ganaVentaja = true;
+        // VENTAJA: Revisar si gana nueva ventaja tras resoluciones
+        let ganaVentaja = state.bisonHit && (state.curr.n === "Assault" || (state.curr.n === "Psycho Punisher" && state.isCrit) || (state.activeBoostBison && state.activeBoostBison.boost.includes("Advantage on Hit")));
+        
+        if (ganaVentaja) { 
+            state.adv = "BISON"; log("Bison gana Ventaja (Advantage) para el próximo turno."); 
+        } else {
+            state.adv = "NINGUNA"; // La ventaja de turnos anteriores se consume al realizar el Strike.
         }
-        
-        if (ganaVentaja) { state.adv = "BISON"; log("Bison gana Ventaja (Advantage)."); }
-        else state.adv = "NINGUNA";
         
         log("---------- ASALTO FINALIZADO ----------"); 
+        if (state.active === "BISON") faseFinalTurno();
         updateUI();
     }
 
     function toggleAdv() { 
-        const l = ["NINGUNA", "PLAYER", "BISON"]; 
-        let idx = l.indexOf(state.adv);
-        if(idx === -1) idx = 0;
-        state.adv = l[(idx+1)%3]; 
-        updateUI(); 
+        const l = ["NINGUNA", "PLAYER", "BISON"]; let idx = l.indexOf(state.adv);
+        state.adv = l[(idx === -1 ? 0 : idx + 1) % 3]; updateUI(); 
     }
 
     window.onload = loadState;
