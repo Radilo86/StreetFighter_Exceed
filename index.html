@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exceed Automa: M. Bison Master Edition v3.0</title>
+    <title>Exceed Automa: M. Bison Master Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root { --sf-yellow: #fdd835; --sf-red: #d32f2f; --sf-blue: #1565c0; --bg-dark: #0a0a0a; --panel-bg: #1a1a24; --text-light: #f5f5f5; --exceed-purple: #9c27b0; }
@@ -57,7 +57,7 @@
         <button class="btn" style="width:200px; margin-top:20px;" onclick="resetGame()">NUEVA PARTIDA</button>
     </div>
 
-    <h1>EXCEED AUTOMA: M. BISON (MASTER EDITION v3)</h1>
+    <h1>EXCEED AUTOMA: M. BISON (RULES COMPLIANT EDITION)</h1>
 
     <div class="grid-container">
         <div class="panel" id="mainPanel">
@@ -302,7 +302,6 @@
 
     function drawCard() {
         if (state.deck.length === 0) {
-            // Regla oficial Muerte Súbita Exceed: Si debes robar, tu mazo está vacío y ya has rebarajado.
             if (state.discard.length === 0 || state.res) { 
                 state.hpB = 0; log("¡BISON DEBE ROBAR PERO SU MAZO ESTÁ VACÍO Y YA REBARAJÓ! ¡PIERDE LA PARTIDA!"); 
                 chequearGameOver(); return false; 
@@ -325,10 +324,10 @@
     }
 
     function faseFinalTurno() {
-        let extraDraws = 0;
-        if (state.activeBoostBison && state.activeBoostBison.boost.includes("Psycho Power")) extraDraws++;
-        if (state.exc) extraDraws++; 
-        for(let i = 0; i < extraDraws; i++) { log("Habilidad Pasiva (Psycho Power/Exceed): Bison roba 1 carta adicional."); drawCard(); }
+        if (state.exc) { 
+            log("Pasiva Exceed Mode: Bison roba 1 carta adicional al final del turno."); 
+            drawCard(); 
+        }
         checkHandLimit();
     }
 
@@ -397,8 +396,9 @@
                 if (diff > 0) modDist(moves); else modDist(-moves);
                 log(`IA Gasta Force para Moverse ${moves} espacio(s) al rango ${state.r}.`);
             } else {
-                let c = state.hand.shift(); state.discard.push(c);
-                log(`IA Paga Force para Cambiar 1 Carta de su mano.`);
+                let c = state.hand.shift(); 
+                state.gauge.push(c);
+                log(`IA usa su HABILIDAD ÚNICA (UA): Mueve 1 carta de su mano al Gauge y roba 1 carta.`);
             }
         } else {
             log("IA Conserva recursos (Pasa turno / Roba).");
@@ -424,7 +424,7 @@
             if (b.includes("+2 Power")) state.curr.p += 2;
             if (b.includes("+1 Armor")) state.curr.a += 1;
             if (b.includes("+2 Guard")) state.curr.g += 2;
-            if (b.includes("Psycho Power")) state.curr.p += Math.min(5, state.gauge.length);
+            if (b.includes("Psycho Power")) state.curr.p += state.gauge.length; 
             if (b.includes("Unstoppable")) { state.curr.ignoreStun = true; state.isCrit = true; }
         }
     }
@@ -461,6 +461,11 @@
             state.curr = JSON.parse(JSON.stringify(valid[0]));
             state.hand.splice(state.hand.findIndex(c => c.n === valid[0].n), 1);
 
+            if (state.curr.ultra) {
+                 state.discard.push(...state.gauge.splice(0, state.curr.cost));
+                 state.curr.paid = true;
+            }
+
             let dupIdx = state.hand.findIndex(c => c.n === state.curr.n && !c.ultra);
             if (dupIdx !== -1) { state.isEX = true; state.discard.push(state.hand.splice(dupIdx, 1)[0]); log(`Bison empareja su ataque con copia EX.`); } 
             else if (state.gauge.length >= 1 && !state.curr.ultra && Math.random() > 0.5) { state.isEX = true; state.discard.push(state.gauge.shift()); log(`Bison gasta Gauge para forzar un ataque EX.`); }
@@ -481,7 +486,7 @@
     function revelar() {
         if (!state.curr) return;
 
-        while (state.curr && state.curr.ultra && state.gauge.length < state.curr.cost) {
+        while (state.curr && state.curr.ultra && state.gauge.length < state.curr.cost && !state.curr.paid) {
             log(`Ataque Inválido: Bison revela Ultra sin recursos. Se descarta y prueba de nuevo.`);
             state.discard.push(state.curr);
             
@@ -495,9 +500,10 @@
             state.curr = JSON.parse(JSON.stringify(state.deck.pop()));
         }
 
-        if (state.curr.ultra) {
+        if (state.curr.ultra && !state.curr.paid) {
             state.discard.push(...state.gauge.splice(0, state.curr.cost));
-            log(`¡BISON DESATA UN ULTRA! (Paga ${state.curr.cost} Gauge)`);
+            state.curr.paid = true;
+            log(`¡BISON DESATA UN ULTRA DE WILD SWING! (Paga ${state.curr.cost} Gauge)`);
         }
 
         if (state.isWild && state.curr) aplicarModificadores();
@@ -558,14 +564,11 @@
         let pD = parseInt(document.getElementById("pDmg")?.value) || 0;
         let bS = state.curr.s || 0;
 
-        // RESOLUCIÓN DE EMPATE POR VENTAJA
-        let bisonGanaEmpate = false;
-        if (state.adv === "BISON") bisonGanaEmpate = true;
-        else if (state.adv === "PLAYER") bisonGanaEmpate = false;
-        else if (state.active === "BISON") bisonGanaEmpate = true; // Si no hay ventaja, gana el activo
+        // RESOLUCIÓN DE EMPATE POR INICIATIVA (El atacante gana el empate oficial)
+        let bisonGanaEmpate = (state.active === "BISON");
 
         let ejecutarImpactoBison = () => {
-            if (state.stunnedB) return; // Bloqueo estricto
+            if (state.stunnedB) return; 
             if (state.curr.r !== null && state.r >= state.curr.r[0] && state.r <= state.curr.r[1]) { 
                 state.bisonHit = true; resolverFaseHit(); 
                 let bonusP = (state.isCrit && (state.curr.n === "Sliding Kick" || state.curr.n === "Psycho Punisher")) ? 2 : 0; 
@@ -574,18 +577,25 @@
         };
 
         if (bS > pS || (bS === pS && bisonGanaEmpate)) {
+            // BISON ES MÁS RÁPIDO
             ejecutarImpactoBison();
-            if (!state.bisonHit || !state.stunnedP) { 
-                if (state.isCrit && state.curr.n === "Nightmare Booster") log("¡NIGHTMARE BOOSTER CRÍTICO! Bison esquiva mágicamente el golpe.");
-                else state.stunnedB = impactar("BISON", pD, false, state.curr.ignoreStun); 
+            if (!state.stunnedP) { 
+                if (state.bisonHit && state.isCrit && state.curr.n === "Nightmare Booster") {
+                    log("¡NIGHTMARE BOOSTER CRÍTICO! Bison esquiva mágicamente el contraataque.");
+                } else {
+                    state.stunnedB = impactar("BISON", pD, false, state.curr.ignoreStun); 
+                }
+            } else {
+                log("¡El jugador está ATURDIDO y no puede contraatacar!");
             }
         } else {
-            if (state.isCrit && state.curr.n === "Nightmare Booster") log("¡NIGHTMARE BOOSTER CRÍTICO! Bison esquiva mágicamente el golpe.");
-            else state.stunnedB = impactar("BISON", pD, false, state.curr.ignoreStun);
+            // JUGADOR ES MÁS RÁPIDO
+            state.stunnedB = impactar("BISON", pD, false, state.curr.ignoreStun);
             
             if (!state.stunnedB) ejecutarImpactoBison();
             else log("¡BISON RECIBIÓ DAÑO CRÍTICO Y QUEDÓ ATURDIDO (STUNNED)! Su contraataque se cancela.");
         }
+        
         setDisplaySafe("stepResolve", "none"); setDisplaySafe("stepAfter", "block");
     }
 
@@ -610,8 +620,14 @@
     function limpiar() {
         if(!state.curr) return;
         
-        // REGLA OFICIAL: La carta usada para el asalto SIEMPRE va a la zona de Gauge, independientemente de si impactó o fue aturdido.
-        state.gauge.push(state.curr);
+        // REGLA OFICIAL: La carta usada para el asalto va al Gauge SOLO si impacta.
+        if (state.bisonHit) {
+            state.gauge.push(state.curr);
+            log("El ataque de Bison impactó: La carta va al GAUGE.");
+        } else {
+            state.discard.push(state.curr);
+            log("El ataque de Bison falló o fue anulado: La carta va a DESCARTES.");
+        }
         
         if (state.activeBoostBison) { 
             if (state.activeBoostBison.boost.includes("Sustain") && !state.sustainedUsed) { state.sustainedUsed = true; log("Boost 'Focus' Mantenido (Sustain)."); } 
@@ -620,16 +636,16 @@
         
         setDisplaySafe("strikeUI", "none"); setCombatButtons(false);
         
-        // VENTAJA: Revisar si gana nueva ventaja tras resoluciones
         let ganaVentaja = state.bisonHit && (state.curr.n === "Assault" || (state.curr.n === "Psycho Punisher" && state.isCrit) || (state.activeBoostBison && state.activeBoostBison.boost.includes("Advantage on Hit")));
         
         if (ganaVentaja) { 
             state.adv = "BISON"; log("Bison gana Ventaja (Advantage) para el próximo turno."); 
-        } else {
-            state.adv = "NINGUNA"; // La ventaja de turnos anteriores se consume al realizar el Strike.
+        } else if (state.adv === "BISON") {
+            state.adv = "NINGUNA"; // Consumió su ventaja previa al tomar este Strike.
         }
         
         log("---------- ASALTO FINALIZADO ----------"); 
+        
         if (state.active === "BISON") faseFinalTurno();
         updateUI();
     }
